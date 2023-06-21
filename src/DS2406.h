@@ -9,6 +9,7 @@
 #include "OneWireItem.h"
 
 constexpr uint8_t value_xFF { static_cast<uint8_t>(0xFF) };
+constexpr uint8_t value_x00 { static_cast<uint8_t>(0x00) };
 
 class DS2406 : public OneWireItem
 {
