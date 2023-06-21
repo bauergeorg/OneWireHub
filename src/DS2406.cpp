@@ -292,7 +292,16 @@ bool DS2406::readMemory(uint8_t* const destination, const uint16_t length, const
 
 void DS2406::clearStatus(void) // copied from DS2506
 {
-    memset(status, value_xFF, STATUS_SIZE);
+    //memset(status, value_xFF, STATUS_SIZE);
+    status[STATUS_WP_PAGES]   = value_xFF;
+    status[STATUS_PG_REDIR]   = value_xFF;
+    status[STATUS_PG_REDIR+1] = value_xFF;
+    status[STATUS_PG_REDIR+2] = value_xFF;
+    status[STATUS_PG_REDIR+3] = value_xFF;
+    status[STATUS_UNDEF_B1]   = value_x00;
+    status[STATUS_UNDEF_B1+1] = value_x00;
+    status[STATUS_DEVICE]     = value_xFF;
+
 }
 
 uint8_t DS2406::writeStatus(const uint16_t address, const uint8_t value) // copied from DS2506
