@@ -363,3 +363,47 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
     const uint8_t destin_address  = (source_address & PAGE_MASK) | (destin_page << 5);
     return destin_address;
 }
+
+// copied from DS2408
+void DS2406::setPinState(const uint8_t pinNumber, const bool value)
+{
+    uint8_t pio_state = memory[REG_PIO_LOGIC];
+    if(value)   pio_state |= 1 << pinNumber;
+    else        pio_state &= ~(1 << pinNumber);
+
+    // look for changes in the activity latches
+    memory[REG_PIO_ACTIVITY] |= pio_state ^ memory[REG_PIO_LOGIC]; // TODO: just good guess here, has anyone the energy to figure out each register?
+    memory[REG_PIO_LOGIC]    = pio_state;
+    memory[REG_PIO_OUTPUT]   = pio_state;
+}
+
+// copied from DS2408
+bool DS2406::getPinState(const uint8_t pinNumber) const
+{
+    return static_cast<bool>(memory[REG_PIO_LOGIC] & ( 1 << pinNumber ));
+}
+
+// copied from DS2408
+uint8_t DS2406::getPinState(void) const
+{
+    return memory[REG_PIO_LOGIC];
+}
+
+// copied from DS2408
+void DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
+{
+    if (value)  memory[REG_PIO_ACTIVITY] |=  (1<<pinNumber);
+    else        memory[REG_PIO_ACTIVITY] &= ~(1<<pinNumber);
+}
+
+// copied from DS2408
+bool DS2406::getPinActivity(const uint8_t pinNumber) const
+{
+    return static_cast<bool>(memory[REG_PIO_ACTIVITY] & ( 1 << pinNumber ));
+}
+
+// copied from DS2408
+uint8_t DS2406::getPinActivity(void) const
+{
+    return memory[REG_PIO_ACTIVITY];
+}
