@@ -40,11 +40,62 @@ private:
     static constexpr uint8_t    STATUS_SIZE         { 8 }; // in bytes
     
     static constexpr uint8_t    STATUS_WP_PAGES     { 0x00 }; // 1 byte -> Page write protection (bit 0-3) and page used status (bit 4-7)
+    // STATUS_WP_PAGES byte
+    //  Bit 0...3: Write protect
+    //  Bit 4..7: Bit mask
     static constexpr uint8_t    STATUS_PG_REDIR     { 0x01 }; // 4 byte -> Page redirection
+    // STATUS_PG_REDIR byte(s)
+    //  Bit 0...2: Redirection
+    //  Bit 3...7: static 1
     static constexpr uint8_t    STATUS_UNDEF_B1     { 0x05 }; // 2 byte -> reserved / undefined
     static constexpr uint8_t    STATUS_DEVICE       { 0x07 }; // 1 byte -> valid device settings 
+    // STATUS_DEVICE byte
+    //  Bit 0: CSS0 Polarity
+    //  Bit 1: CSS1 Source Select
+    //  Bit 2: CSS2 Source Select
+    //  Bit 3: CSS3 Channel Select
+    //  Bit 4: CSS4 Channel Select
+    //  Bit 5: PIO-A Channel Flip-Flop
+    //  Bit 6: PIO-B Channel Flip-Flop
+    //  Bit 7: Suppy Indication (read only)
 
     uint8_t  status[STATUS_SIZE]; // eprom status bytes
+
+    // Channel Control Section
+    static constexpr uint8_t    CONTROL_SIZE         { 2 }; // in bytes
+
+    static constexpr uint8_t    CONTROL_1     { 0x00 }; // 1 byte
+    // Channel Control Byte 1
+    //  Bit 0: CRC0
+    //  Bit 1: CRC1
+    //  Bit 2: CHS0
+    //  Bit 3: CHS1
+    //  Bit 4: IC
+    //  Bit 5: TOG
+    //  Bit 6: IM
+    //  Bit 7: ALR
+    static constexpr uint8_t    CONTROL_2     { 0x01 }; // 1 byte
+    // Channel Control Byte 2: always 0xFF
+    // The bit assignments of Channel Control Byte 2 are reserved for future development.
+    // The bus master should always send FFh for the second Channel Control Byte. 
+
+    uint8_t  control[CONTROL_SIZE]; // channel control bytes
+
+    // Channel Info Section
+    static constexpr uint8_t    INFO_SIZE         { 1 }; // in bytes
+
+    static constexpr uint8_t    INFO     { 0x00 }; // 1 byte
+    // Channel Info Byte
+    //  Bit 0: PIO-A Channel Flip-Flop Q
+    //  Bit 1: PIO-B Channel Flip-Flop Q
+    //  Bit 2: PIO A Sensed Level 
+    //  Bit 3: PIO B Sensed Level 
+    //  Bit 4: PIO-A Activity Latch
+    //  Bit 5: PIO-B Activity Latch
+    //  Bit 6: Number of Channels: 0 = channel A only
+    //  Bit 7: Supply Indication: 0 = no supply
+
+    uint8_t  info[INFO_SIZE]; // channel info byte
 
     void    clearScratchpad(void);
     uint8_t  translateRedirection(uint8_t source_address) const; // react to redirection in status and not available memory
@@ -52,6 +103,8 @@ private:
 public:
 
     static constexpr uint8_t family_code        { 0x12 };
+    static constexpr uint8_t chip_type          { 0 };      // Chip type = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
+                                                            // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
 
     DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
@@ -78,30 +131,31 @@ public:
     bool    setPageRedirection(uint8_t page_source, uint8_t page_destin);
     uint8_t getPageRedirection(uint8_t page) const;
 
+    // Pin Section
+    /*
+    void    setPinState(uint8_t pinNumber, bool value);
+    bool    getPinState(uint8_t pinNumber) const;
+    uint8_t getPinState(void) const;
 
-    // Pin State Section
-    bool    setPinState(const uint8_t a_or_b, const bool value)
-    {
-        if (value && pin_latch[a_or_b & 1]) return false; // can't set 1 because pin is latched
-        pin_state[a_or_b & 1] = value;
-        return true;
-    }
+    void    setPinActivity(uint8_t pinNumber, bool value);
+    bool    getPinActivity(uint8_t pinNumber) const;
+    uint8_t getPinActivity(void) const;
+    */
 
-    bool    getPinState(const uint8_t a_or_b) const
-    {
-        return pin_state[a_or_b & 1];
-    }
+    // Supply Indictaion Section
+    void DS2406::setSupplyIndication(bool value);
+    void DS2406::clearSupplyIndication(void);
+    uint8_t DS2406::getSupplyIndication(void) const;
 
-    void    setPinLatch(const uint8_t a_or_b, const bool value) // latching a pin will pull it down (state=zero)
-    {
-        pin_latch[a_or_b & 1] = value;
-        if (value) setPinState(a_or_b, false);
-    }
+    // Channel Control Section
+    void DS2406::writeChannelControl(uint8_t value);
+    void DS2406::clearChannelControl(void);
+    uint8_t DS2406::readChannelControl(void) const;
 
-    bool    getPinLatch(const uint8_t a_or_b) const
-    {
-        return pin_latch[a_or_b & 1];
-    }
+    // Channel Info Section
+    void DS2406::writeChannelInfo(uint8_t value);
+    void DS2406::clearChannelInfo(void);
+    uint8_t DS2406::readChannelInfo(void) const;
 
 };
 

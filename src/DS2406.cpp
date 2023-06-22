@@ -10,6 +10,9 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     clearStatus();
     clearMemory();
 
+    clearChannelControl();
+    clearChannelInfo();
+
     clearScratchpad();
 
     // Pin State Section //???
@@ -153,6 +156,53 @@ void DS2406::duty(OneWireHub * const hub)
                 crc = 0;
             }
             break;
+
+        case 0xF5:      // Channel-Access Read
+
+            static uint8_t channel_control_byte_1 = (reg_TA >> 8) & uint8_t(0xFF);
+            static uint8_t channel_control_byte_2 = reg_TA & uint8_t(0xFF);
+
+            
+            // channel_control_byte_2 should be 0xFF
+            writeChannelControl(channel_control_byte_1);
+            data = readChannelInfo();
+            if (hub->send(&data, 1, crc)) return;
+
+            static uint8_t info;
+            static bool toggle;
+            // if IM is set in channel control byte: write mode (toggle = 0)
+            if (channel_control_byte_1 & 0x40) {
+                toggle = 0;
+                if (hub->recv(&info, 1, crc))  return;
+                writeChannelInfo(info);
+            }
+            // if IM is not set in channel control byte: read mode (toggle = 1)
+            else{
+                toggle = 1;
+                info = readChannelInfo();
+                if (hub->send(&info, 1, crc)); return;
+            }
+
+            // if CRC enabled
+            if (channel_control_byte_1 & 0x3) {
+                crc = ~crc; // normally crc16 is sent ~inverted
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
+                crc = 0;
+            }
+
+            break;
+
+
+            /*
+            while (true)
+            {
+                static uint16_t crc2 = crc;
+                if (hub->send(memory,4,crc)) return;
+                crc = ~crc; // most important step, easy to miss....
+                if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
+                crc = crc2;
+            }*/
+
         /*
         case 0x0F:      // WRITE SCRATCHPAD COMMAND
 
@@ -289,7 +339,6 @@ bool DS2406::readMemory(uint8_t* const destination, const uint16_t length, const
 }
 
 // Status Section
-
 void DS2406::clearStatus(void) // copied from DS2506
 {
     //memset(status, value_xFF, STATUS_SIZE);
@@ -301,6 +350,9 @@ void DS2406::clearStatus(void) // copied from DS2506
     status[STATUS_UNDEF_B1]   = value_x00;
     status[STATUS_UNDEF_B1+1] = value_x00;
     status[STATUS_DEVICE]     = value_xFF;
+
+    // clear supply voltage indicator (for all chips) at STATUS_DEVICE section
+    clearSupplyIndication();
 
 }
 
@@ -364,6 +416,33 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
     return destin_address;
 }
 
+// Pin Section
+
+    // // Pin State Section
+    // bool    setPinState(const uint8_t a_or_b, const bool value)
+    // {
+    //     if (value && pin_latch[a_or_b & 1]) return false; // can't set 1 because pin is latched
+    //     pin_state[a_or_b & 1] = value;
+    //     return true;
+    // }
+
+    // bool    getPinState(const uint8_t a_or_b) const
+    // {
+    //     return pin_state[a_or_b & 1];
+    // }
+
+    // void    setPinLatch(const uint8_t a_or_b, const bool value) // latching a pin will pull it down (state=zero)
+    // {
+    //     pin_latch[a_or_b & 1] = value;
+    //     if (value) setPinState(a_or_b, false);
+    // }
+
+    // bool    getPinLatch(const uint8_t a_or_b) const
+    // {
+    //     return pin_latch[a_or_b & 1];
+    // }
+
+/*
 // copied from DS2408
 void DS2406::setPinState(const uint8_t pinNumber, const bool value)
 {
@@ -406,4 +485,61 @@ bool DS2406::getPinActivity(const uint8_t pinNumber) const
 uint8_t DS2406::getPinActivity(void) const
 {
     return memory[REG_PIO_ACTIVITY];
+}
+*/
+
+
+// Supply Indictaion Section
+void DS2406::setSupplyIndication(bool value)
+{
+    // in case of DS2406P+ chip type it is possible to set supply voltage
+    if(chip_type == 0x01) {
+        if(value)   status[STATUS_DEVICE] |= 1 << 7;
+        else        status[STATUS_DEVICE] &= ~(1 << 7);
+    }
+}
+
+void DS2406::clearSupplyIndication(void)
+{
+    status[STATUS_DEVICE] &= ~(1 << 7);
+}
+
+uint8_t DS2406::getSupplyIndication(void) const
+{
+    return static_cast<bool>(status[STATUS_DEVICE] & ( 0x80 ) >> 7);
+}
+
+
+// Channel Control Section
+
+void DS2406::writeChannelControl(const uint8_t value)
+{
+    control[CONTROL_1] = value;
+}
+
+void DS2406::clearChannelControl(void)
+{
+    //status[STATUS_DEVICE] &= ~(1 << 7);
+}
+
+uint8_t DS2406::readChannelControl(void) const
+{
+    return control[CONTROL_1];
+}
+
+// Channel Info Section
+
+void DS2406::writeChannelInfo(const uint8_t value)
+{
+    info[INFO] = value;
+}
+
+void DS2406::clearChannelInfo(void)
+{
+    //status[STATUS_DEVICE] &= ~(1 << 7);
+}
+
+uint8_t DS2406::readChannelInfo(void) const
+{
+    return info[INFO];
 }
