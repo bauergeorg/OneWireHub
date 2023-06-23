@@ -7,19 +7,18 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     static_assert(sizeof(scratchpad) < 256, "Implementation does not cover the whole address-space");
     static_assert(sizeof(memory) < 256,  "Implementation does not cover the whole address-space");
 
+    // define default value DS2406+
+    chip_type = 0;
+    channel_size = 1;
+
     clearStatus();
     clearMemory();
 
-    clearChannelControl();
-    clearChannelInfo();
+    clearControl();
+    clearInfo();
 
     clearScratchpad();
 
-    // Pin State Section //???
-    pin_state[0] = false;
-    pin_latch[0] = false;
-    pin_state[1] = false;
-    pin_latch[1] = false;
 }
 
 void DS2406::duty(OneWireHub * const hub)
@@ -157,15 +156,15 @@ void DS2406::duty(OneWireHub * const hub)
             }
             break;
 
-        case 0xF5:      // Channel-Access Read
+        case 0xF5:      // CHANNEL-ACCESS
 
             static uint8_t channel_control_byte_1 = (reg_TA >> 8) & uint8_t(0xFF);
             static uint8_t channel_control_byte_2 = reg_TA & uint8_t(0xFF);
 
             
             // channel_control_byte_2 should be 0xFF
-            writeChannelControl(channel_control_byte_1);
-            data = readChannelInfo();
+            writeControl(channel_control_byte_1);
+            data = readInfo();
             if (hub->send(&data, 1, crc)) return;
 
             static uint8_t info;
@@ -174,12 +173,12 @@ void DS2406::duty(OneWireHub * const hub)
             if (channel_control_byte_1 & 0x40) {
                 toggle = 0;
                 if (hub->recv(&info, 1, crc))  return;
-                writeChannelInfo(info);
+                writeInfo(info);
             }
             // if IM is not set in channel control byte: read mode (toggle = 1)
             else{
                 toggle = 1;
-                info = readChannelInfo();
+                info = readInfo();
                 if (hub->send(&info, 1, crc)); return;
             }
 
@@ -305,6 +304,24 @@ void DS2406::duty(OneWireHub * const hub)
     }
 }
 
+bool DS2406::setChipType(uint8_t value)
+// Chip type = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
+// Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
+{
+    if (value > 0x01) return false;
+    
+    chip_type = value;
+    if (chip_type == 0)  channel_size = 1;
+    else                 channel_size = 2;
+
+    clearSupplyIndication();
+    clearControl();
+    clearInfo();
+
+    return true;
+}
+
+
 // Memory Section
 
 void DS2406::clearScratchpad(void) // copied from 
@@ -416,78 +433,90 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
     return destin_address;
 }
 
-// Pin Section
-
-    // // Pin State Section
-    // bool    setPinState(const uint8_t a_or_b, const bool value)
-    // {
-    //     if (value && pin_latch[a_or_b & 1]) return false; // can't set 1 because pin is latched
-    //     pin_state[a_or_b & 1] = value;
-    //     return true;
-    // }
-
-    // bool    getPinState(const uint8_t a_or_b) const
-    // {
-    //     return pin_state[a_or_b & 1];
-    // }
-
-    // void    setPinLatch(const uint8_t a_or_b, const bool value) // latching a pin will pull it down (state=zero)
-    // {
-    //     pin_latch[a_or_b & 1] = value;
-    //     if (value) setPinState(a_or_b, false);
-    // }
-
-    // bool    getPinLatch(const uint8_t a_or_b) const
-    // {
-    //     return pin_latch[a_or_b & 1];
-    // }
-
-/*
-// copied from DS2408
+// copied from DS2408 and changed
 void DS2406::setPinState(const uint8_t pinNumber, const bool value)
 {
-    uint8_t pio_state = memory[REG_PIO_LOGIC];
+    uint8_t pio_state = (info[INFO] & 0x0C) >> 2;
+
+    if (pinNumber >= channel_size) return false;
+
     if(value)   pio_state |= 1 << pinNumber;
     else        pio_state &= ~(1 << pinNumber);
 
     // look for changes in the activity latches
-    memory[REG_PIO_ACTIVITY] |= pio_state ^ memory[REG_PIO_LOGIC]; // TODO: just good guess here, has anyone the energy to figure out each register?
-    memory[REG_PIO_LOGIC]    = pio_state;
-    memory[REG_PIO_OUTPUT]   = pio_state;
+    info[INFO] |= (pio_state ^ getPinState()) << 4; // activity
+    info[INFO] = pio_state << 2;                    // sensed level
+    info[INFO] = pio_state;                         // output
 }
 
-// copied from DS2408
+// copied from DS2408 and changed
 bool DS2406::getPinState(const uint8_t pinNumber) const
 {
-    return static_cast<bool>(memory[REG_PIO_LOGIC] & ( 1 << pinNumber ));
+    if (pinNumber >= channel_size) return false;
+    
+    return static_cast<bool>(info[INFO] & ( 1 << (pinNumber+2) ));
 }
 
-// copied from DS2408
+// copied from DS2408 and changed
 uint8_t DS2406::getPinState(void) const
 {
-    return memory[REG_PIO_LOGIC];
+    return (info[INFO] & 0x0C) >> 2;
 }
 
-// copied from DS2408
-void DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
+// copied from DS2408 and changed
+bool DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
 {
-    if (value)  memory[REG_PIO_ACTIVITY] |=  (1<<pinNumber);
-    else        memory[REG_PIO_ACTIVITY] &= ~(1<<pinNumber);
+    
+    if (pinNumber >= channel_size) return false;
+
+    if (value)  info[INFO] |=  (1 << (pinNumber+4) );
+    else        info[INFO] &= ~(1 << (pinNumber+4) );
+
+    return true;
 }
 
-// copied from DS2408
+// bool DS2406::setPinActivity(const uint8_t value)
+// {
+    
+//     if (value > 0x03) return false;
+
+//     info[INFO] = (value & 0x03) << 4 ;
+
+//     return true;
+// }
+
+bool DS2406::clearPinActivity(const uint8_t pinNumber)
+{
+
+    if (pinNumber >= channel_size) return false;
+
+    info[INFO] &= ~(1 << (pinNumber+4) );
+
+    return true;
+}
+
+bool DS2406::clearPinActivity(void)
+{
+
+    info[INFO] &= ~(0x03 << 4 );
+
+    return true;
+}
+
+
+// copied from DS2408 and changed
 bool DS2406::getPinActivity(const uint8_t pinNumber) const
 {
-    return static_cast<bool>(memory[REG_PIO_ACTIVITY] & ( 1 << pinNumber ));
+    if (pinNumber >= channel_size) return false;
+    
+    return static_cast<bool>(info[INFO] & ( 1 << (pinNumber+4) ));
 }
 
-// copied from DS2408
+// copied from DS2408 and changed
 uint8_t DS2406::getPinActivity(void) const
 {
-    return memory[REG_PIO_ACTIVITY];
+    return (info[INFO] & 0x30) >> 4;
 }
-*/
-
 
 // Supply Indictaion Section
 void DS2406::setSupplyIndication(bool value)
@@ -512,34 +541,51 @@ uint8_t DS2406::getSupplyIndication(void) const
 
 // Channel Control Section
 
-void DS2406::writeChannelControl(const uint8_t value)
+void DS2406::writeControl(const uint8_t value)
 {
     control[CONTROL_1] = value;
+
+    // is ALR bit set: 
+    if (value & 0x80) {
+        // clear pin activity
+        clearPinActivity(0x00);
+        clearPinActivity(0x01);
+    }
 }
 
-void DS2406::clearChannelControl(void)
+void DS2406::clearControl(void)
 {
-    //status[STATUS_DEVICE] &= ~(1 << 7);
+    // in case of DS2406+ chip type:
+    if(chip_type == 0x00) {
+        // clear IC bit
+        control[CONTROL_1] &= ~(1 << 4);
+    }
 }
 
-uint8_t DS2406::readChannelControl(void) const
+uint8_t DS2406::readControl(void) const
 {
     return control[CONTROL_1];
 }
 
 // Channel Info Section
 
-void DS2406::writeChannelInfo(const uint8_t value)
+void DS2406::writeInfo(const uint8_t value)
 {
     info[INFO] = value;
 }
 
-void DS2406::clearChannelInfo(void)
+void DS2406::clearInfo(void)
 {
-    //status[STATUS_DEVICE] &= ~(1 << 7);
+    // in case of DS2406+ chip type:
+    if(chip_type == 0x00) {
+        // clear number of channels bit
+        info[INFO] &= ~(1 << 6);
+        // clear supply indication
+        info[INFO] &= ~(1 << 6);
+    }
 }
 
-uint8_t DS2406::readChannelInfo(void) const
+uint8_t DS2406::readInfo(void) const
 {
     return info[INFO];
 }

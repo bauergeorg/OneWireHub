@@ -32,6 +32,12 @@ private:
     uint8_t memory[MEM_SIZE]; // 4 pages of 32 bytes
     uint8_t scratchpad[SCRATCHPAD_SIZE];
 
+
+    uint8_t chip_type;                          // Chip type = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
+                                                // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
+    uint8_t channel_size;                       // number of switches
+
+
     // Pin State Section
     bool pin_state[2];  // sensed input for A and B
     bool pin_latch[2];  // PIO can be set to input (0) or output-to-zero (1)
@@ -68,12 +74,20 @@ private:
     // Channel Control Byte 1
     //  Bit 0: CRC0
     //  Bit 1: CRC1
+    //              CRC1=0, CRC0=0 -> CRC disabled (no CRC at all)
+    //              CRC1=0, CRC0=0 -> CRC after every byte
+    //              CRC1=0, CRC0=0 -> CRC after 8 bytes
+    //              CRC1=0, CRC0=0 -> CRC after 32 bytes
     //  Bit 2: CHS0
     //  Bit 3: CHS1
-    //  Bit 4: IC
-    //  Bit 5: TOG
-    //  Bit 6: IM
-    //  Bit 7: ALR
+    //              CHS1=0, CHS0=0 -> not allowed
+    //              CHS1=0, CHS0=1 -> channel a only
+    //              CHS1=1, CHS0=0 -> channel b only
+    //              CHS1=1, CHS0=1 -> both channels interleaved
+    //  Bit 4: IC (0=asyncronous mode, 1=syncronous mode)
+    //  Bit 5: TOG (0=toggle inactive, 1=toggle active)
+    //  Bit 6: IM (0=write, 1=read)
+    //  Bit 7: ALR (1=clear acivitity latch)
     static constexpr uint8_t    CONTROL_2     { 0x01 }; // 1 byte
     // Channel Control Byte 2: always 0xFF
     // The bit assignments of Channel Control Byte 2 are reserved for future development.
@@ -103,12 +117,12 @@ private:
 public:
 
     static constexpr uint8_t family_code        { 0x12 };
-    static constexpr uint8_t chip_type          { 0 };      // Chip type = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
-                                                            // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
 
     DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
     void    duty(OneWireHub * hub) final;
+
+    bool    setChipType(uint8_t value);
 
     // Memory Section
     void    clearMemory(void);
@@ -132,30 +146,31 @@ public:
     uint8_t getPageRedirection(uint8_t page) const;
 
     // Pin Section
-    /*
     void    setPinState(uint8_t pinNumber, bool value);
     bool    getPinState(uint8_t pinNumber) const;
     uint8_t getPinState(void) const;
 
-    void    setPinActivity(uint8_t pinNumber, bool value);
+    bool    setPinActivity(uint8_t pinNumber, bool value);
+    //bool    setPinActivity(uint8_t value);
+    bool    clearPinActivity(uint8_t pinNumber);
+    bool    clearPinActivity(void);
     bool    getPinActivity(uint8_t pinNumber) const;
     uint8_t getPinActivity(void) const;
-    */
 
     // Supply Indictaion Section
-    void DS2406::setSupplyIndication(bool value);
-    void DS2406::clearSupplyIndication(void);
-    uint8_t DS2406::getSupplyIndication(void) const;
+    void setSupplyIndication(bool value);
+    void clearSupplyIndication(void);
+    uint8_t getSupplyIndication(void) const;
 
     // Channel Control Section
-    void DS2406::writeChannelControl(uint8_t value);
-    void DS2406::clearChannelControl(void);
-    uint8_t DS2406::readChannelControl(void) const;
+    void writeControl(uint8_t value);
+    void clearControl(void);
+    uint8_t readControl(void) const;
 
     // Channel Info Section
-    void DS2406::writeChannelInfo(uint8_t value);
-    void DS2406::clearChannelInfo(void);
-    uint8_t DS2406::readChannelInfo(void) const;
+    void writeInfo(uint8_t value);
+    void clearInfo(void);
+    uint8_t readInfo(void) const;
 
 };
 
