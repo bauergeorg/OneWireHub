@@ -45,10 +45,10 @@ public:
 
     void    duty(OneWireHub * hub) final;
 
-    void    clearMemory(void);
+    virtual void    clearMemory(void) override;
 
-    bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0);
-    bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const;
+    virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) override;
+    virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const override ;
 
     void    setPageProtection(uint8_t position);
     bool    getPageProtection(uint8_t position) const;
