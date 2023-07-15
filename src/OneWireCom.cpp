@@ -26,30 +26,29 @@ void OneWireCom::communicate()
           cmdbuffer[i] = strtoul(token, NULL, 16);
           token = strtok(NULL, " ");
         }
-        m_serial->print("command: ");
-
-        for (int j=0; j < cmdLength; j++){
-            char str[cmdLength];
-            sprintf(str, "%d", cmdbuffer[j]);
-            if (strlen(str)==1) {
-              m_serial->print("0");
-            }
-            m_serial->print(cmdbuffer[j], HEX);
-            m_serial->print(" ");
-
-        }
-        m_serial->println();
+        // m_serial->print("command: ");
+        //
+        // for (int j=0; j < cmdLength; j++){
+        //
+        //     if (cmdbuffer[i]<0x10) {
+        //       m_serial->print("0");
+        //     }
+        //     m_serial->print(cmdbuffer[j], HEX);
+        //     m_serial->print(" ");
+        //
+        // }
+        // m_serial->println();
 
         if (cmdbuffer[0]==00) {
 
-              m_serial->print("write command received\n");
+              // m_serial->print("write command received\n");
 
               const uint8_t pos=cmdbuffer[1];
-              m_serial->print("Start position: ");
-              m_serial->println(pos,HEX);
+              // m_serial->print("Start position: ");
+              // m_serial->println(pos,HEX);
               const uint8_t length=cmdbuffer[2];
-              m_serial->print("length: ");
-              m_serial->println(length,HEX);
+              // m_serial->print("length: ");
+              // m_serial->println(length,HEX);
               uint8_t memory[length];
               m_serial->print("content: ");
               for(int i = 0; i < length ; i++){
@@ -60,68 +59,69 @@ void OneWireCom::communicate()
               }
               m_serial->println();
 
-              m_serial->print("write menory...\n");
+              // m_serial->print("write menory...\n");
               m_chip->writeMemory(memory,length,pos);
+              // m_serial->print("done!\n");
 
-              uint8_t mem[length];
-              int compareCount=0;
-              m_chip->readMemory(mem,length,pos);
-              for (size_t i = 0; i < length; i++) {
-                if (mem[i]==memory[i]) {
-                  compareCount++;
-                }
-              }
-              if (compareCount==length) {
-                m_serial->print("done!\n");
-              }
-              else{
-                m_serial->print("something went wrong while writing, please check the command!\n");
-              }
+              // uint8_t mem[length];
+              // int compareCount=0;
+              // m_chip->readMemory(mem,length,pos);
+              // for (size_t i = 0; i < length; i++) {
+              //   if (mem[i]==memory[i]) {
+              //     compareCount++;
+              //   }
+              // }
+              // if (compareCount==length) {
+              //   m_serial->print("done!\n");
+              // }
+              // else{
+              //   m_serial->print("something went wrong while writing, please check the command!\n");
+              // }
         }
 
         else if (cmdbuffer[0]==01) {
 
-              m_serial->print("read command received\n");
+              // m_serial->print("read command received\n");
               uint8_t pos=cmdbuffer[1];
-              m_serial->print("Start position: ");
-              m_serial->println(pos, HEX);
+              // m_serial->print("Start position: ");
+              // m_serial->println(pos, HEX);
               uint8_t length=cmdbuffer[2];
-              m_serial->print("length: ");
-              m_serial->println(length, HEX);
+              // m_serial->print("length: ");
+              // m_serial->println(length, HEX);
               uint8_t readmemory[length];
 
-              m_serial->print("read menory...\n");
+              // m_serial->print("read menory...\n");
               m_chip->readMemory(readmemory, length, pos);
 
-              int count=0;
+              // int count=0;
               for (int j=0; j<length; j++){
-                  char str[length];
-                  sprintf(str, "%d", readmemory[j]);
-                  if (strlen(str)==1) {
+
+                  if (readmemory[j]<0x10) {
                     m_serial->print("0");
                   }
                   m_serial->print(readmemory[j], HEX);
                   m_serial->print(" ");
                     //  if ((len>0) & ((len%32)==0)) {m_serial->print("\n");}
-                  count++;
+                  // count++;
                   }
               m_serial->println();
+              // m_serial->print("done!\n");
 
-              if (count==length) {
-                m_serial->print("done!\n");
-              }
-              else {
-                  m_serial->print("something went wrong while reading, please check the command!\n");
-              }
+              // if (count==length) {
+              //   m_serial->print("done!\n");
+              // }
+              // else {
+              //     m_serial->print("something went wrong while reading, please check the command!\n");
+              // }
 
 
         }
         else if (cmdbuffer[0]==02) {
-
-              m_serial->print("clear command received\n");
-              m_serial->print("clear menory...\n");
+              //
+              // m_serial->print("clear command received\n");
+              // m_serial->print("clear menory...\n");
               m_chip->clearMemory();
-              m_serial->print("done!\n");
+              m_serial->print("success");
         }
 
         else{
@@ -132,8 +132,7 @@ void OneWireCom::communicate()
 
               m_serial->print("command: ");
              for (int i = 0; i < cmdLength; i++) {
-
-                if(strlen(String(cmdbuffer[i]).c_str())==1) m_serial->print("0");
+                if(cmdbuffer[i]<0x10) m_serial->print("0");
                 m_serial->print(cmdbuffer[i],HEX);
                 m_serial->print(" ");
               }
