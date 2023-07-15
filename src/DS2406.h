@@ -75,9 +75,9 @@ private:
     //  Bit 0: CRC0
     //  Bit 1: CRC1
     //              CRC1=0, CRC0=0 -> CRC disabled (no CRC at all)
-    //              CRC1=0, CRC0=0 -> CRC after every byte
-    //              CRC1=0, CRC0=0 -> CRC after 8 bytes
-    //              CRC1=0, CRC0=0 -> CRC after 32 bytes
+    //              CRC1=0, CRC0=1 -> CRC after every byte
+    //              CRC1=1, CRC0=0 -> CRC after 8 bytes
+    //              CRC1=1, CRC0=1 -> CRC after 32 bytes
     //  Bit 2: CHS0
     //  Bit 3: CHS1
     //              CHS1=0, CHS0=0 -> not allowed
@@ -165,11 +165,13 @@ public:
     // Channel Control Section
     void writeControl(uint8_t value);
     void clearControl(void);
+    void updateControl(void);
     uint8_t readControl(void) const;
 
     // Channel Info Section
     void writeInfo(uint8_t value);
     void clearInfo(void);
+    void updateInfo(void);
     uint8_t readInfo(void) const;
 
 };

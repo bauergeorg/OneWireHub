@@ -11,10 +11,10 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     chip_type = 0;
     channel_size = 1;
 
-    clearStatus();
     clearMemory();
 
     clearControl();
+    clearStatus();
     clearInfo();
 
     clearScratchpad();
@@ -158,24 +158,28 @@ void DS2406::duty(OneWireHub * const hub)
 
         case 0xF5:      // CHANNEL-ACCESS
 
+            // received two bytes from slave
             static uint8_t channel_control_byte_1 = (reg_TA >> 8) & uint8_t(0xFF);
             static uint8_t channel_control_byte_2 = reg_TA & uint8_t(0xFF);
 
-            
+            // save data
             // channel_control_byte_2 should be 0xFF
             writeControl(channel_control_byte_1);
+
+            // send channel info byte 1
             data = readInfo();
             if (hub->send(&data, 1, crc)) return;
 
             static uint8_t info;
             static bool toggle;
-            // if IM is set in channel control byte: write mode (toggle = 0)
+
+            // if IM is set in channel control byte: write mode
             if (channel_control_byte_1 & 0x40) {
                 toggle = 0;
                 if (hub->recv(&info, 1, crc))  return;
                 writeInfo(info);
             }
-            // if IM is not set in channel control byte: read mode (toggle = 1)
+            // if IM is not set in channel control byte: read mode
             else{
                 toggle = 1;
                 info = readInfo();
@@ -183,7 +187,7 @@ void DS2406::duty(OneWireHub * const hub)
             }
 
             // if CRC enabled
-            if (channel_control_byte_1 & 0x3) {
+            if (channel_control_byte_1 & 0x03) {
                 crc = ~crc; // normally crc16 is sent ~inverted
                 if (hub->send(reinterpret_cast<uint8_t *>(&crc),2)) return;
                 crc = 0;
@@ -304,9 +308,11 @@ void DS2406::duty(OneWireHub * const hub)
     }
 }
 
-bool DS2406::setChipType(uint8_t value)
+// Set Chip Type
 // Chip type = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
 // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
+// Function will clear supply indication and update Channel Control Byte 1, Status Registers, Channel Info Byte 1
+bool DS2406::setChipType(uint8_t value)
 {
     if (value > 0x01) return false;
     
@@ -315,14 +321,14 @@ bool DS2406::setChipType(uint8_t value)
     else                 channel_size = 2;
 
     clearSupplyIndication();
-    clearControl();
-    clearInfo();
+    updateControl();
+    updateInfo();
 
     return true;
 }
 
 
-// Memory Section
+/* Memory Section */
 
 void DS2406::clearScratchpad(void) // copied from 
 {
@@ -355,7 +361,9 @@ bool DS2406::readMemory(uint8_t* const destination, const uint16_t length, const
     return (_length==length);
 }
 
-// Status Section
+/* Status Section */
+
+// Clear Status Registers
 void DS2406::clearStatus(void) // copied from DS2506
 {
     //memset(status, value_xFF, STATUS_SIZE);
@@ -373,12 +381,16 @@ void DS2406::clearStatus(void) // copied from DS2506
 
 }
 
-uint8_t DS2406::writeStatus(const uint16_t address, const uint8_t value) // copied from DS2506
+// Write Status Register
+// - update info channel register, too
+uint8_t DS2406::writeStatus(const uint16_t address, const uint8_t value) // copied from DS2506 and edit
 {
-    if (address < STATUS_UNDEF_B1)  status[address] &= value; // writing is allowed only here
+    status[address] = value;
+    updateInfo();
     return status[address];
 }
 
+// Read Status Register
 uint8_t DS2406::readStatus(const uint16_t address) const // copied from DS2506
 {
     if (address >= STATUS_SIZE)     return 0xFF;
@@ -477,7 +489,7 @@ bool DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
 
 // bool DS2406::setPinActivity(const uint8_t value)
 // {
-    
+   
 //     if (value > 0x03) return false;
 
 //     info[INFO] = (value & 0x03) << 4 ;
@@ -485,6 +497,8 @@ bool DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
 //     return true;
 // }
 
+// Clear Pin Activity of a specific pin number
+// (Information saved in Channel Info Byte 1)
 bool DS2406::clearPinActivity(const uint8_t pinNumber)
 {
 
@@ -495,15 +509,18 @@ bool DS2406::clearPinActivity(const uint8_t pinNumber)
     return true;
 }
 
+// Clear Pin Activity
+// (Information saved in Channel Info Byte 1)
 bool DS2406::clearPinActivity(void)
 {
-
+  
     info[INFO] &= ~(0x03 << 4 );
 
     return true;
 }
 
-
+// Get Pin Activity
+// (Information saved in Channel Info Byte 1)
 // copied from DS2408 and changed
 bool DS2406::getPinActivity(const uint8_t pinNumber) const
 {
@@ -512,35 +529,54 @@ bool DS2406::getPinActivity(const uint8_t pinNumber) const
     return static_cast<bool>(info[INFO] & ( 1 << (pinNumber+4) ));
 }
 
+// Get Pin Activity
+// (Information saved in Channel Info Byte 1)
 // copied from DS2408 and changed
 uint8_t DS2406::getPinActivity(void) const
 {
     return (info[INFO] & 0x30) >> 4;
 }
 
-// Supply Indictaion Section
+/* Supply Indictaion Section */
+
+// Set Supply Indication Bit of status memory register 0x07
+// and update Channel Info Byte 1
 void DS2406::setSupplyIndication(bool value)
 {
     // in case of DS2406P+ chip type it is possible to set supply voltage
     if(chip_type == 0x01) {
-        if(value)   status[STATUS_DEVICE] |= 1 << 7;
-        else        status[STATUS_DEVICE] &= ~(1 << 7);
+        if(value){
+            status[STATUS_DEVICE] |= 1 << 7;
+        }
+        else{
+            status[STATUS_DEVICE] &= ~(1 << 7);
+        }       
     }
+    // update info register, too
+    updateInfo();
 }
 
+// Clear Supply Indication Bit of status memory register 0x07
+// and update Channel Info Byte 1
 void DS2406::clearSupplyIndication(void)
 {
     status[STATUS_DEVICE] &= ~(1 << 7);
+    // update info register, too
+    updateInfo();
 }
 
+// Read Supply Indication Bit from status memory register 0x07
 uint8_t DS2406::getSupplyIndication(void) const
 {
     return static_cast<bool>(status[STATUS_DEVICE] & ( 0x80 ) >> 7);
 }
 
 
-// Channel Control Section
+/* Channel Control Section */
 
+// Write Channel Control Byte 1 
+// Function:
+// - clears Pin Activity
 void DS2406::writeControl(const uint8_t value)
 {
     control[CONTROL_1] = value;
@@ -553,7 +589,17 @@ void DS2406::writeControl(const uint8_t value)
     }
 }
 
+// Clear Control Byte 1
+// Function clears:
 void DS2406::clearControl(void)
+{
+    updateControl();
+}
+
+// Update Channel Control Byte 1
+// Function:
+// - set IC bot to relation of chip type
+void DS2406::updateControl(void)
 {
     // in case of DS2406+ chip type:
     if(chip_type == 0x00) {
@@ -562,29 +608,78 @@ void DS2406::clearControl(void)
     }
 }
 
+// Read Channel Control Byte 1
 uint8_t DS2406::readControl(void) const
 {
     return control[CONTROL_1];
 }
 
-// Channel Info Section
+/* Channel Info Section */
 
+// Write Channel Info Byte 1
 void DS2406::writeInfo(const uint8_t value)
 {
     info[INFO] = value;
 }
 
+// Clear Channel Info Byte 1
+// Function clears:
+// - ...
 void DS2406::clearInfo(void)
 {
+    updateInfo();
+}
+
+// Update Channel Info Byte 1
+// Function:
+// - set number of bits to relation of chip type
+// - set pio channel flip flops to relation of status informations
+// - set supply indication as status information 
+void DS2406::updateInfo(void)
+{
+    
+    uint8_t data;
+    data = readStatus(STATUS_DEVICE);
+
+    // if PIO-A Channel Flip-Flop is set
+    if (data & 0x20) {
+        // set value
+        info[INFO] |= (1 << 0);
+    }
+    else {
+        // clear value
+        info[INFO] &= ~(1 << 0);
+    }            
+
+    // if PIO-A Channel Flip-Flop is set
+    if (data & 0x40) {
+        // set value
+        info[INFO] |= (1 << 1);
+    }
+    else {
+        // clear value
+        info[INFO] &= ~(1 << 1);
+    }
+
     // in case of DS2406+ chip type:
     if(chip_type == 0x00) {
         // clear number of channels bit
         info[INFO] &= ~(1 << 6);
         // clear supply indication
-        info[INFO] &= ~(1 << 6);
+        info[INFO] &= ~(1 << 7);
     }
+    // in case of DS2406P+ chip type:
+    else {
+        // set number of channels bit
+        info[INFO] |= (1 << 6);
+        // if Supply Indication is set
+        if (data & 0x80) info[INFO] |= (1 << 7); 
+        else             info[INFO] &= ~(1 << 7);
+    }
+
 }
 
+// Return Channel Info Byte 1
 uint8_t DS2406::readInfo(void) const
 {
     return info[INFO];
