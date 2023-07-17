@@ -47,8 +47,8 @@ public:
 
     virtual void    clearMemory(void) override;
 
-    virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) override;
-    virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const override ;
+    virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) ;
+    virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const ;
 
     void    setPageProtection(uint8_t position);
     bool    getPageProtection(uint8_t position) const;
