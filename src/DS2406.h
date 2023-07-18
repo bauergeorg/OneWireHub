@@ -1,6 +1,6 @@
 // 1Kb 1-Wire OTP EPROM with dual channel addressable switch
-// no not work fine!
-// note: datasheet is fuzzy, but device is similar to ds2413 and ds2431
+// first version works fine!
+// note: datasheet is fuzzy, but device is similar to ds2413, ds2431 and ds2408
 // native bus-features: Overdrive capable
 
 #ifndef ONEWIRE_DS2406_H
@@ -37,7 +37,7 @@ private:
                                                 // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
     uint8_t channel_size;                       // number of switches
 
-    bool pull_up;                               // flag for pull up's at pio output: 0 is no pull up, 1 is pull up resistor
+    bool pull_up;                               // flag for simulated pull-up's at pio output: 0 is no pull up, 1 is pull up resistor
 
     // Status Section (copied from DS2502)
     static constexpr uint8_t    STATUS_SIZE         { 8 }; // in bytes
@@ -120,6 +120,7 @@ public:
     void    duty(OneWireHub * hub) final;
 
     bool    setChipType(uint8_t value);
+    bool    setPullUpResistor(bool value);
 
     // Memory Section
     void    clearMemory(void);
