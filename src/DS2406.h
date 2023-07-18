@@ -37,10 +37,7 @@ private:
                                                 // Chip type = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
     uint8_t channel_size;                       // number of switches
 
-
-    // Pin State Section
-    bool pin_state[2];  // sensed input for A and B
-    bool pin_latch[2];  // PIO can be set to input (0) or output-to-zero (1)
+    bool pull_up;                               // flag for pull up's at pio output: 0 is no pull up, 1 is pull up resistor
 
     // Status Section (copied from DS2502)
     static constexpr uint8_t    STATUS_SIZE         { 8 }; // in bytes
@@ -150,8 +147,11 @@ public:
     bool    getPinState(uint8_t pinNumber) const;
     uint8_t getPinState(void) const;
 
+    void    setPinLevel(uint8_t pinNumber, bool value);
+    bool    getPinLevel(uint8_t pinNumber) const;
+    uint8_t getPinLevel(void) const;
+
     bool    setPinActivity(uint8_t pinNumber, bool value);
-    //bool    setPinActivity(uint8_t value);
     bool    clearPinActivity(uint8_t pinNumber);
     bool    clearPinActivity(void);
     bool    getPinActivity(uint8_t pinNumber) const;

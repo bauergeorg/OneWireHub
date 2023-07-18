@@ -10,6 +10,7 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     // define default value DS2406+
     chip_type = 0;
     channel_size = 1;
+    pull_up = 1;
 
     clearMemory();
 
@@ -159,12 +160,14 @@ void DS2406::duty(OneWireHub * const hub)
         case 0xF5:      // CHANNEL-ACCESS
 
             // received two bytes from slave
-            static uint8_t channel_control_byte_1 = (reg_TA >> 8) & uint8_t(0xFF);
-            static uint8_t channel_control_byte_2 = reg_TA & uint8_t(0xFF);
+            uint8_t channel_control_byte_2 = (reg_TA >> 8) & uint8_t(0xFF);
+            uint8_t channel_control_byte_1 = reg_TA & uint8_t(0xFF);
 
             // save data
             // channel_control_byte_2 should be 0xFF
             writeControl(channel_control_byte_1);
+
+            //Serial.println(readControl());
 
             // send channel info byte 1
             data = readInfo();
@@ -177,7 +180,7 @@ void DS2406::duty(OneWireHub * const hub)
             if (channel_control_byte_1 & 0x40) {
                 toggle = 0;
                 if (hub->recv(&info, 1, crc))  return;
-                writeInfo(info);
+                //writeInfo(info);
             }
             // if IM is not set in channel control byte: read mode
             else{
@@ -322,7 +325,7 @@ bool DS2406::setChipType(uint8_t value)
 
     clearSupplyIndication();
     updateControl();
-    updateInfo();
+    //updateInfo();
 
     return true;
 }
@@ -386,7 +389,7 @@ void DS2406::clearStatus(void) // copied from DS2506
 uint8_t DS2406::writeStatus(const uint16_t address, const uint8_t value) // copied from DS2506 and edit
 {
     status[address] = value;
-    updateInfo();
+    //updateInfo();
     return status[address];
 }
 
@@ -445,32 +448,78 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
     return destin_address;
 }
 
-// copied from DS2408 and changed
+// Set Pin State of a specific pin number
+// (Information saved in Channel Info Byte 1)
+// - set device status byte bit 5 or/and bit 6
+// - in case of pull-up: set pin level
 void DS2406::setPinState(const uint8_t pinNumber, const bool value)
 {
-    uint8_t pio_state = (info[INFO] & 0x0C) >> 2;
+    if (pinNumber >= channel_size) return false;
+
+    // if value true, set output high/true
+    if(value) {
+        status[STATUS_DEVICE] &= ~(1 << (pinNumber+5));
+        info[INFO] &= ~(1 << pinNumber);
+    }
+    // if value false, set output low/false
+    else {
+        status[STATUS_DEVICE] |= (1 << (pinNumber+5));
+        info[INFO] |= (1 << pinNumber);
+    }
+
+    if (pull_up == 1) {
+        setPinLevel(pinNumber, value);
+    }
+
+}
+
+// Get Pin State of a specific pin number
+// (Information read from Channel Info Byte 1)
+bool DS2406::getPinState(const uint8_t pinNumber) const
+{
+    if (pinNumber >= channel_size) return false;
+    
+    return static_cast<bool>(info[INFO] & ( 1 << (pinNumber) ));
+}
+
+// Get Pin State
+// (Information read from Channel Info Byte 1)
+uint8_t DS2406::getPinState(void) const
+{
+    return (info[INFO] & 0x03);
+}
+
+// Set Pin Level of a specific pin number
+// (Information saved in Channel Info Byte 1)
+void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
+{
+    uint8_t pio_level = getPinLevel();
 
     if (pinNumber >= channel_size) return false;
 
-    if(value)   pio_state |= 1 << pinNumber;
-    else        pio_state &= ~(1 << pinNumber);
+    if(value){
+        info[INFO] |= (1 << (pinNumber+2));
+    }   
+    else {
+        info[INFO] &= ~(1 << (pinNumber+2));
+    }
 
-    // look for changes in the activity latches
-    info[INFO] |= (pio_state ^ getPinState()) << 4; // activity
-    info[INFO] = pio_state << 2;                    // sensed level
-    info[INFO] = pio_state;                         // output
+    // set activity
+    info[INFO] |= (pio_level ^ getPinLevel()) << 4; 
 }
 
-// copied from DS2408 and changed
-bool DS2406::getPinState(const uint8_t pinNumber) const
+// Get Pin Level of a specific pin number
+// (Information read from Channel Info Byte 1)
+bool DS2406::getPinLevel(const uint8_t pinNumber) const
 {
     if (pinNumber >= channel_size) return false;
     
     return static_cast<bool>(info[INFO] & ( 1 << (pinNumber+2) ));
 }
 
-// copied from DS2408 and changed
-uint8_t DS2406::getPinState(void) const
+// Get Pin Level
+// (Information read from Channel Info Byte 1)
+uint8_t DS2406::getPinLevel(void) const
 {
     return (info[INFO] & 0x0C) >> 2;
 }
@@ -486,16 +535,6 @@ bool DS2406::setPinActivity(const uint8_t pinNumber, const bool value)
 
     return true;
 }
-
-// bool DS2406::setPinActivity(const uint8_t value)
-// {
-   
-//     if (value > 0x03) return false;
-
-//     info[INFO] = (value & 0x03) << 4 ;
-
-//     return true;
-// }
 
 // Clear Pin Activity of a specific pin number
 // (Information saved in Channel Info Byte 1)
@@ -553,7 +592,7 @@ void DS2406::setSupplyIndication(bool value)
         }       
     }
     // update info register, too
-    updateInfo();
+    //updateInfo();
 }
 
 // Clear Supply Indication Bit of status memory register 0x07
@@ -562,7 +601,7 @@ void DS2406::clearSupplyIndication(void)
 {
     status[STATUS_DEVICE] &= ~(1 << 7);
     // update info register, too
-    updateInfo();
+    //updateInfo();
 }
 
 // Read Supply Indication Bit from status memory register 0x07
@@ -627,7 +666,8 @@ void DS2406::writeInfo(const uint8_t value)
 // - ...
 void DS2406::clearInfo(void)
 {
-    updateInfo();
+    info[INFO] = value_x00;
+    //updateInfo();
 }
 
 // Update Channel Info Byte 1
@@ -635,6 +675,7 @@ void DS2406::clearInfo(void)
 // - set number of bits to relation of chip type
 // - set pio channel flip flops to relation of status informations
 // - set supply indication as status information 
+// - clear pio-b infos, in case of only one channel
 void DS2406::updateInfo(void)
 {
     
@@ -643,38 +684,53 @@ void DS2406::updateInfo(void)
 
     // if PIO-A Channel Flip-Flop is set
     if (data & 0x20) {
+        //if (pull_up) setPinLevel(0, true);
         // set value
-        info[INFO] |= (1 << 0);
+        //info[INFO] |= (1 << 0);
     }
     else {
+        //if (pull_up) setPinLevel(0, false);
         // clear value
-        info[INFO] &= ~(1 << 0);
+        //info[INFO] &= ~(1 << 0);
     }            
 
-    // if PIO-A Channel Flip-Flop is set
-    if (data & 0x40) {
-        // set value
-        info[INFO] |= (1 << 1);
+    // in case of only PIO-A
+    if (channel_size == 0){
+        // clear channel flip flop for PIO-B
+        //info[INFO] &= ~(1 << 1);
+        // clear sensed level for PIO-B
+        //info[INFO] &= ~(1 << 3);
+        // clear activity latch for PIO-B
+        //info[INFO] &= ~(1 << 5);
     }
     else {
-        // clear value
-        info[INFO] &= ~(1 << 1);
+        // if PIO-B Channel Flip-Flop is set
+        if (data & 0x40) {
+            //if (pull_up) setPinLevel(1, true);
+            // set value
+            //info[INFO] |= (1 << 1);
+        }
+        else {
+            //if (pull_up) setPinLevel(1, false);
+            // clear value
+            //info[INFO] &= ~(1 << 1);
+        }
     }
 
     // in case of DS2406+ chip type:
     if(chip_type == 0x00) {
         // clear number of channels bit
-        info[INFO] &= ~(1 << 6);
+        //info[INFO] &= ~(1 << 6);
         // clear supply indication
-        info[INFO] &= ~(1 << 7);
+        //info[INFO] &= ~(1 << 7);
     }
     // in case of DS2406P+ chip type:
     else {
         // set number of channels bit
-        info[INFO] |= (1 << 6);
+        //info[INFO] |= (1 << 6);
         // if Supply Indication is set
-        if (data & 0x80) info[INFO] |= (1 << 7); 
-        else             info[INFO] &= ~(1 << 7);
+        //if (data & 0x80) info[INFO] |= (1 << 7); 
+        //else             info[INFO] &= ~(1 << 7);
     }
 
 }
