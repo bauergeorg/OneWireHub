@@ -14,7 +14,9 @@ private:
 
     OneWireItem* m_chip{nullptr};
     HardwareSerial* m_serial;
+    int state;
 
+    
 public:
     OneWireCom(OneWireItem& ds24,  HardwareSerial& serial);
     void communicate();
