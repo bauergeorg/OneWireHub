@@ -64,6 +64,11 @@ public:
     virtual uint8_t writeStatus(uint16_t address, uint8_t value){ };
     virtual uint8_t readStatus(uint16_t address) const{ };
     
+    
+    virtual void writeInfo(uint8_t value) {};
+    virtual void clearInfo(void) {};
+    virtual void updateInfo(void) {};
+    virtual uint8_t readInfo(void) const {};
 
 
 };

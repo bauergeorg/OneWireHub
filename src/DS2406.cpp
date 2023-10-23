@@ -146,7 +146,7 @@ void DS2406::duty(OneWireHub * const hub)
                 reg_RA = reg_TA & uint8_t(7);
                 while (reg_RA < 8)
                 {
-                    data = ~readStatus(reg_TA); // read byte by byte
+                    data = readStatus(reg_TA); // read byte by byte
                     if (hub->send(&data, 1, crc)) return;
                     reg_RA++;
                     reg_TA++;

@@ -33,7 +33,9 @@ void OneWireCom::communicate()
                 for(int i = 0; i < 128; i++){
                     Serial.write(readmemory[i]);
                 }
-                
+                // Vllt mehr mals einen leeren String 
+                // und dann eine 55 schicken
+
                 state = 0;
             }else if(data == 175){  // 0xAF to Clear Memory
                 // Clear Memory
@@ -42,21 +44,23 @@ void OneWireCom::communicate()
                 }
                 Serial.write(170);
             }else if(data == 20){
-                // read status register
-                for(int i = 0; i < 8; i++){
-                    Serial.write(m_chip->readStatus(i));
-                }
+                // return the status info byte
+                Serial.write(m_chip->readInfo());
                 state = 0;
             }else if(data == 30){
-                // PIOA auf 0 überprüfen
-                if(m_chip->readStatus(7) == 95){
+                // PIOA auf 0 überprüfen 
+                if((m_chip->readInfo() & 0x10) > 0){
                     Serial.write(55);
+                }else{
+                    Serial.write(110);
                 }
                 state = 0;
             }else if(data == 40){
                 // PIOB auf 0 überprüfen
-                if(m_chip->readStatus(7) == 63){
+                if((m_chip->readInfo() & 0x20) > 0){
                     Serial.write(55);
+                }else{
+                    Serial.write(110);
                 }
                 state = 0;
             }
