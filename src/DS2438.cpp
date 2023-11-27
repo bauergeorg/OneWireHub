@@ -94,8 +94,8 @@ void DS2438::clearMemory(void)
 
 bool DS2438::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = uint8_t(position>>3);
@@ -111,8 +111,8 @@ bool DS2438::writeMemory(const uint8_t* const source, const uint8_t length, cons
 
 bool DS2438::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }

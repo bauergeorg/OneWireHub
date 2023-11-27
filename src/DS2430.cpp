@@ -117,15 +117,15 @@ bool DS2430::writeMemory(const uint8_t* const source, const uint8_t length, cons
 
 bool DS2430::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }
 
 bool DS2430::syncScratchpad()
 {
-    uint8_t length = (MEM_SIZE > SCRATCHPAD_SIZE) ? SCRATCHPAD_SIZE : MEM_SIZE;
+    uint8_t length = (MEM_SIZE_CHIP > SCRATCHPAD_SIZE) ? SCRATCHPAD_SIZE : MEM_SIZE_CHIP;
     memcpy(scratchpad,memory,length);
     return true;
 }

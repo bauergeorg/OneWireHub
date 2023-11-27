@@ -48,10 +48,10 @@ private:
     static constexpr uint8_t  PAGE_SIZE          { 32 };
     static constexpr uint8_t  PAGE_COUNT         { 5 };
 
-    static constexpr uint8_t  MEM_SIZE           { 3 * PAGE_SIZE };
+    static constexpr uint8_t  MEM_SIZE_CHIP           { 3 * PAGE_SIZE };
     static constexpr uint8_t  SCRATCHPAD_SIZE    { PAGE_COUNT * PAGE_SIZE };
 
-    uint8_t  memory[MEM_SIZE];
+    uint8_t  memory[MEM_SIZE_CHIP];
     uint8_t  scratchpad[SCRATCHPAD_SIZE];
 
     void    clearScratchpad(void);

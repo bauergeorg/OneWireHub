@@ -37,12 +37,12 @@ void DS2406::duty(OneWireHub * const hub)
     {
         case 0xF0:      // READ MEMORY // copied from DS2506
 
-            while (reg_TA <= MEM_SIZE)
+            while (reg_TA <= MEM_SIZE_CHIP)
             {
                 const uint16_t destin_TA = translateRedirection(reg_TA);
                 const uint8_t  length    = PAGE_SIZE - uint8_t(reg_TA & PAGE_MASK);
 
-                if (destin_TA < MEM_SIZE)
+                if (destin_TA < MEM_SIZE_CHIP)
                 {
                     if (hub->send(&memory[destin_TA],length,crc)) return;
                 }
@@ -64,7 +64,7 @@ void DS2406::duty(OneWireHub * const hub)
 
         case 0xA5:      // EXTENDED READ MEMORY (with redirection-information) // copied from DS2506
 
-            while (reg_TA <= MEM_SIZE)
+            while (reg_TA <= MEM_SIZE_CHIP)
             {
                 const uint8_t  source_page = static_cast<uint8_t>(reg_TA >> 5);
                 const uint8_t  destin_page = getPageRedirection(source_page);
@@ -75,7 +75,7 @@ void DS2406::duty(OneWireHub * const hub)
                 const uint16_t destin_TA   = translateRedirection(reg_TA);
                 const uint8_t  length      = PAGE_SIZE - uint8_t(reg_TA & PAGE_MASK);
 
-                if (destin_TA < MEM_SIZE)
+                if (destin_TA < MEM_SIZE_CHIP)
                 {
                     if (hub->send(&memory[destin_TA],length,crc)) return;
                 }
@@ -98,7 +98,7 @@ void DS2406::duty(OneWireHub * const hub)
 
         case 0x0F:      // WRITE MEMORY // copied from DS2506
 
-            while (reg_TA < MEM_SIZE) // check for valid address
+            while (reg_TA < MEM_SIZE_CHIP) // check for valid address
             {
                 if (hub->recv(&data,1,crc)) break;
 
@@ -160,8 +160,10 @@ void DS2406::duty(OneWireHub * const hub)
         case 0xF5:      // CHANNEL-ACCESS
 
             // received two bytes from slave
-            uint8_t channel_control_byte_2 = (reg_TA >> 8) & uint8_t(0xFF);
-            uint8_t channel_control_byte_1 = reg_TA & uint8_t(0xFF);
+            uint8_t channel_control_byte_2;
+            uint8_t channel_control_byte_1;
+            channel_control_byte_2 = (reg_TA >> 8) & uint8_t(0xFF);
+            channel_control_byte_1 = reg_TA & uint8_t(0xFF);
 
             // save data
             // channel_control_byte_2 should be 0xFF
@@ -300,8 +302,8 @@ void DS2406::duty(OneWireHub * const hub)
         case 0xF0:      // READ MEMORY COMMAND
 
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
-            if (reg_TA >= MEM_SIZE) return;
-            if (hub->send(&memory[reg_TA],MEM_SIZE - uint8_t(reg_TA),crc)) return;
+            if (reg_TA >= MEM_SIZE_CHIP) return;
+            if (hub->send(&memory[reg_TA],MEM_SIZE_CHIP - uint8_t(reg_TA),crc)) return;
             break; // send 1s when read is complete, is passive, so do nothing here
         */
         default:
@@ -353,13 +355,13 @@ void DS2406::clearScratchpad(void) // copied from
 
 void DS2406::clearMemory(void) // copied from DS2506
 {
-    memset(memory, value_xFF, MEM_SIZE);
+    memset(memory, value_xFF, MEM_SIZE_CHIP);
 }
 
 bool DS2406::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position) // copied from DS2502/DS2506
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = static_cast<uint8_t>(position >> 5);
@@ -371,8 +373,8 @@ bool DS2406::writeMemory(const uint8_t* const source, const uint8_t length, cons
 
 bool DS2406::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const // copied from DS2431/DS2502/DS2506
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }
@@ -467,7 +469,7 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
 // - in case of pull-up: set pin level
 void DS2406::setPinState(const uint8_t pinNumber, const bool value)
 {
-    if (pinNumber >= channel_size) return false;
+    if (pinNumber >= channel_size) return;
 
     // if value true, set output high/true
     if(value) {
@@ -508,7 +510,7 @@ void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
 {
     uint8_t pio_level = getPinLevel();
 
-    if (pinNumber >= channel_size) return false;
+    if (pinNumber >= channel_size) return;
 
     if(value){
         info[INFO] |= (1 << (pinNumber+2));
@@ -519,6 +521,7 @@ void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
 
     // set activity
     info[INFO] |= (pio_level ^ getPinLevel()) << 4; 
+
 }
 
 // Get Pin Level of a specific pin number

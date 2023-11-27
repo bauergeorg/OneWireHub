@@ -19,7 +19,7 @@
 #include "DS18B20.h"  // Digital Thermometer, 12bit
 
 constexpr uint8_t pin_led_dbg   { 13 };
-constexpr uint8_t pin_onewire   { 8 };
+constexpr uint8_t pin_onewire   { 2 };
 
 auto hub     = OneWireHub(pin_onewire); // do an bus-timing-calibration on first sensor-attachment
 
@@ -31,7 +31,7 @@ auto ds18b20 = DS18B20(DS18B20::family_code, 0x00, 0x02, 0x0B, 0x08, 0x01, 0x0D)
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     Serial.println("OneWire-Hub calibration by observing the OW-Bus");
     Serial.flush();

@@ -48,7 +48,7 @@ void DS2506::duty(OneWireHub * const hub)
                 const uint16_t destin_TA = translateRedirection(reg_TA);
                 const uint8_t  length    = PAGE_SIZE - uint8_t(reg_TA & PAGE_MASK);
 
-                if (destin_TA < MEM_SIZE)
+                if (destin_TA < MEM_SIZE_CHIP)
                 {
                     if (hub->send(&memory[destin_TA],length,crc)) return;
                 }
@@ -81,7 +81,7 @@ void DS2506::duty(OneWireHub * const hub)
                 const uint16_t destin_TA   = translateRedirection(reg_TA);
                 const uint8_t  length      = PAGE_SIZE - uint8_t(reg_TA & PAGE_MASK);
 
-                if (destin_TA < MEM_SIZE)
+                if (destin_TA < MEM_SIZE_CHIP)
                 {
                     if (hub->send(&memory[destin_TA],length,crc)) return;
                 }
@@ -208,7 +208,7 @@ void DS2506::duty(OneWireHub * const hub)
 
 void DS2506::clearMemory(void)
 {
-    memset(memory, value_xFF, MEM_SIZE);
+    memset(memory, value_xFF, MEM_SIZE_CHIP);
 }
 
 void DS2506::clearStatus(void)
@@ -218,8 +218,8 @@ void DS2506::clearStatus(void)
 
 bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = static_cast<uint8_t>(position >> 5);
@@ -231,8 +231,8 @@ bool DS2506::writeMemory(const uint8_t* const source, const uint16_t length, con
 
 bool DS2506::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }

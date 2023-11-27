@@ -18,13 +18,13 @@ void DS2408::duty(OneWireHub * const hub)
         case 0xF0:      // Read PIO Registers
 
             if (hub->recv(&reg_TA,1,crc)) return;
-            if((reg_TA < REG_OFFSET) || (reg_TA >= REG_OFFSET + MEM_SIZE)) return;
+            if((reg_TA < REG_OFFSET) || (reg_TA >= REG_OFFSET + MEM_SIZE_CHIP)) return;
             if (hub->recv(&data,1,crc)) return; // seconds part of reg_TA, should be zero
             if (data != 0) return;
 
             {
                 const uint8_t start  = (reg_TA - REG_OFFSET);
-                const uint8_t length = MEM_SIZE - start;
+                const uint8_t length = MEM_SIZE_CHIP - start;
                 if (hub->send(&memory[start],length,crc)) return;
             }
 

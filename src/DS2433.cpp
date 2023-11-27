@@ -95,7 +95,7 @@ void DS2433::duty(OneWireHub * const hub)
 
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2)) return;
 
-            for (uint16_t i = reg_TA; i < MEM_SIZE; i+=PAGE_SIZE) // model of the 32byte scratchpad
+            for (uint16_t i = reg_TA; i < MEM_SIZE_CHIP; i+=PAGE_SIZE) // model of the 32byte scratchpad
             {
                 if (hub->send(&memory[i],PAGE_SIZE)) return;
             }
@@ -109,7 +109,7 @@ void DS2433::duty(OneWireHub * const hub)
 
 void DS2433::clearMemory(void)
 {
-    memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE);
+    memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE_CHIP);
 }
 
 void DS2433::clearScratchpad(void)
@@ -119,16 +119,16 @@ void DS2433::clearScratchpad(void)
 
 bool DS2433::writeMemory(const uint8_t* const source, const uint16_t length, const uint16_t position)
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(&memory[position],source,_length);
     return true;
 }
 
 bool DS2433::readMemory(uint8_t* const destination, const uint16_t length, const uint16_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }

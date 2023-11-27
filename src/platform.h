@@ -104,7 +104,7 @@ constexpr uint8_t VALUE_IPL { (microsecondsToClockCycles(1) > 120) ? 26 : 22 }; 
 #define DIRECT_MODE_OUTPUT(base, pin)   pinMode(pin,OUTPUT)
 #define DELAY_MICROSECONDS(us)		    delayMicroseconds(us)
 using io_reg_t = uint32_t; // define special data type for register-access
-constexpr uint8_t VALUE_IPL { 39 }; // instructions per loop, for 40 and 80 MHz (see esp8266 difference)
+constexpr uint8_t VALUE_IPL { 51 }; // instructions per loop, for 40 and 80 MHz (see esp8266 difference)
 
 #elif defined(ARDUINO_ARCH_SAMD) /* arduino family samd */
 // arduino-zero is defined(__SAMD21G18A__)
@@ -115,7 +115,7 @@ constexpr uint8_t VALUE_IPL { 39 }; // instructions per loop, for 40 and 80 MHz 
 #undef clockCyclesPerMicrosecond
 #undef clockCyclesToMicroseconds
 #undef microsecondsToClockCycles
-// assuming SystemCoreClock is 48 MHz
+// assuming CoreClock is 48 MHz
 #define MY_SYSCLK (48000000L)
 //#define MY_SYSCLK (F_CPU)
 #define clockCyclesPerMicrosecond() ( MY_SYSCLK / 1000000L )

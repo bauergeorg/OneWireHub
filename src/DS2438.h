@@ -53,7 +53,7 @@ private:
     static constexpr uint8_t PAGE_COUNT     { 8 }; // how much of the real 8 pages should be emulated, use at least 1, max 8
     static constexpr uint8_t PAGE_SIZE      { 8 }; //
 
-    static constexpr uint8_t MEM_SIZE       { PAGE_COUNT * PAGE_SIZE };
+    static constexpr uint8_t MEM_SIZE_CHIP       { PAGE_COUNT * PAGE_SIZE };
 
     // Register Addresses
     static constexpr uint8_t REG0_MASK_IAD  { 0x01 }; // enable automatic current measurements
@@ -64,7 +64,7 @@ private:
     static constexpr uint8_t REG0_MASK_NVB  { 0x20 }; // eeprom busy flag
     static constexpr uint8_t REG0_MASK_ADB  { 0x40 }; // adc busy flag
 
-    uint8_t memory[MEM_SIZE];  // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
+    uint8_t memory[MEM_SIZE_CHIP];  // this mem is the "scratchpad" in the datasheet., no EEPROM implemented
     uint8_t crc[PAGE_COUNT+1]; // keep the matching crc for each memory-page, reading can be very timesensitive
 
     // One of the following is placed in scratchpad depending on state of REG0_MASK_AD when voltage conversion is requested

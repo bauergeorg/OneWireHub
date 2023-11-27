@@ -16,10 +16,10 @@ class DS2406 : public OneWireItem
 private:
 
     // Memory Section
-    static constexpr uint8_t  MEM_SIZE          { 128 }; // in byte, TODOgba: 144
+    static constexpr uint8_t  MEM_SIZE_CHIP          { 128 }; // in byte, TODOgba: 144
 
     static constexpr uint8_t  PAGE_SIZE         { 32 };  // in byte
-    static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE / PAGE_SIZE }; // at the moment = 4
+    static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE_CHIP / PAGE_SIZE }; // at the moment = 4
     static constexpr uint8_t  PAGE_MASK         { PAGE_SIZE - 1 };
 
     static constexpr uint8_t  SCRATCHPAD_SIZE   { 8 };
@@ -29,7 +29,7 @@ private:
     static constexpr uint8_t  REG_ES_ZERO_MASK  { 0b01011000 }; // reads always zero
     static constexpr uint8_t  REG_ES_AA_MASK    { 0b10000000 }; // authorization accepted (data copied to target memory)
 
-    uint8_t memory[MEM_SIZE]; // 4 pages of 32 bytes
+    uint8_t memory[MEM_SIZE_CHIP]; // 4 pages of 32 bytes
     uint8_t scratchpad[SCRATCHPAD_SIZE];
 
 

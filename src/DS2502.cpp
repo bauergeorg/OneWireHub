@@ -2,7 +2,7 @@
 
 DS2502::DS2502(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7) : OneWireItem(ID1, ID2, ID3, ID4, ID5, ID6, ID7)
 {
-    static_assert(MEM_SIZE < 256, "Implementation does not cover the whole address-space");
+    static_assert(MEM_SIZE_CHIP < 256, "Implementation does not cover the whole address-space");
 
     clearMemory();
     clearStatus();
@@ -144,7 +144,7 @@ uint8_t DS2502::translateRedirection(const uint8_t source_address) const
 
 void DS2502::clearMemory(void)
 {
-    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE);
+    memset(memory, static_cast<uint8_t>(0xFF), MEM_SIZE_CHIP);
 }
 
 void DS2502::clearStatus(void)
@@ -155,8 +155,8 @@ void DS2502::clearStatus(void)
 
 bool DS2502::writeMemory(const uint8_t* const source, const uint8_t length, const uint8_t position)
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(&memory[position],source,_length);
 
     const uint8_t page_start = static_cast<uint8_t>(position >> 5);
@@ -168,8 +168,8 @@ bool DS2502::writeMemory(const uint8_t* const source, const uint8_t length, cons
 
 bool DS2502::readMemory(uint8_t* const destination, const uint8_t length, const uint8_t position) const
 {
-    if (position >= MEM_SIZE) return false;
-    const uint16_t _length = (position + length >= MEM_SIZE) ? (MEM_SIZE - position) : length;
+    if (position >= MEM_SIZE_CHIP) return false;
+    const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
     return (_length==length);
 }
