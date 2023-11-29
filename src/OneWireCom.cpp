@@ -1,12 +1,13 @@
 #include "OneWireCom.h"
 
 
-OneWireCom::OneWireCom(OneWireItem& ds24,  HardwareSerial& serial)
+OneWireCom::OneWireCom(OneWireItem& ds24,  Stream& serial)
 {
         m_chip= &ds24;
         m_serial=&serial;
         state = 0;
 }
+
 
 void OneWireCom::communicate()
 {
@@ -14,35 +15,26 @@ void OneWireCom::communicate()
         int data = 0;
         if(state == 0){
             data = Serial.read();
-            if(data == 1){
-                state = 1;
+            if(data != 0){
+                state = 2;
                 Serial.write(data+1);
             }
-        }else if(state == 1){
-            data = Serial.read();
-            data = data + 1;
-            Serial.write(data);
-            state = 2;
         }else if(state == 2){
             data = Serial.read();
+            
             if(data == 240){ // 0xF0
                 // Read Momory
                 uint8_t readmemory[4*16];
-                // m_serial->print("read menory...\n");
-                bool tmp = m_chip->readMemory(readmemory, 128,0);
-                for(int i = 0; i < 128; i++){
-                    Serial.write(readmemory[i]);
+                //bool tmp = m_chip->readMemory(readmemory, 128,0);
+                for(int i = 0; i < 144; i++){
+                    m_chip->getMemory(i);
                 }
-                // Vllt mehr mals einen leeren String 
-                // und dann eine 55 schicken
-
                 state = 0;
             }else if(data == 175){  // 0xAF to Clear Memory
                 // Clear Memory
-                if(data == 175){
-                    m_chip->clearMemory();
-                }
+                m_chip->clearMemory();
                 Serial.write(170);
+                state = 0;
             }else if(data == 20){
                 // return the status info byte
                 Serial.write(m_chip->readInfo());
@@ -63,8 +55,10 @@ void OneWireCom::communicate()
                     Serial.write(110);
                 }
                 state = 0;
+            }else{
+                Serial.write(0);
             }
-
+            Serial.print(10);
             
         }
     }

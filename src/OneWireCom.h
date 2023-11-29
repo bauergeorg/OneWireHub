@@ -13,12 +13,16 @@ class OneWireCom
 private:
 
     OneWireItem* m_chip{nullptr};
-    HardwareSerial* m_serial;
+    Stream* m_serial;
     int state;
 
     
 public:
-    OneWireCom(OneWireItem& ds24,  HardwareSerial& serial);
+    OneWireCom(OneWireItem& ds24);
+    OneWireCom(OneWireItem& ds24,  Stream& serial, int x);
+    OneWireCom(OneWireItem& ds24,  Stream& serial);
+    
+    
     void communicate();
     ~OneWireCom();
 

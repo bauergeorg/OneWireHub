@@ -348,6 +348,9 @@ bool DS2406::setPullUpResistor(bool value)
 
 /* Memory Section */
 
+
+
+
 void DS2406::clearScratchpad(void) // copied from 
 {
     memset(scratchpad, static_cast<uint8_t>(0x00), SCRATCHPAD_SIZE);    // ????
@@ -376,7 +379,12 @@ bool DS2406::readMemory(uint8_t* const destination, const uint16_t length, const
     if (position >= MEM_SIZE_CHIP) return false;
     const uint16_t _length = (position + length >= MEM_SIZE_CHIP) ? (MEM_SIZE_CHIP - position) : length;
     memcpy(destination,&memory[position],_length);
+
     return (_length==length);
+}
+
+void DS2406::getMemory(int index){    
+    Serial.write(memory[index]);
 }
 
 /* Status Section */

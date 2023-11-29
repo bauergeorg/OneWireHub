@@ -384,6 +384,7 @@ void memset(T1 * const address, const T1 initValue, const T2 bytes)
 template<typename T1, typename T2>
 void memcpy(T1 * const destination, const T1* const source, const T2 bytes)
 {
+    Serial.write(255);
     const T2 iterations = bytes / sizeof(T1);
     for (T2 counter = 0; counter < iterations; ++counter)
     {
@@ -395,6 +396,7 @@ void memcpy(T1 * const destination, const T1* const source, const T2 bytes)
 template<typename T1, typename T2>
 bool memcmp(const T1* const source_A, const T1* const source_B, const T2 bytes) // return true if string is different
 {
+    Serial.write(0);
     const T2 iterations = bytes / sizeof(T1);
     for (T2 counter = 0; counter < iterations; ++counter)
     {

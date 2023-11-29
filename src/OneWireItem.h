@@ -69,7 +69,7 @@ public:
     virtual void clearInfo(void) {};
     virtual void updateInfo(void) {};
     virtual uint8_t readInfo(void) const {};
-
+    virtual void getMemory(int index){};
 
 };
 

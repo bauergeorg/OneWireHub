@@ -133,7 +133,7 @@ public:
 
     uint8_t writeStatus(uint16_t address, uint8_t value);
     uint8_t readStatus(uint16_t address) const;
-    
+    void getMemory(int index);
     void    setPageProtection(uint8_t page);
     bool    getPageProtection(uint8_t page) const; 
 
