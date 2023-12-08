@@ -11,7 +11,7 @@ OneWireCom::OneWireCom(OneWireItem& ds24,  Stream& serial)
 
 void OneWireCom::communicate()
 {
-    if(m_serial->available()>0){
+    if(m_serial->available()>0){    
         int data = 0;
         if(state == 0){
             data = Serial.read();
@@ -28,6 +28,13 @@ void OneWireCom::communicate()
                 //bool tmp = m_chip->readMemory(readmemory, 128,0);
                 for(int i = 0; i < 144; i++){
                     m_chip->getMemory(i);
+                }
+                state = 0;
+            }else if(data == 250){  // DS2431 Read Memory
+                uint8_t readmemory[4*16];
+                bool tmp = m_chip->readMemory(readmemory, 128,0);
+                if(tmp == true){
+                    Serial.write(readmemory, 144);
                 }
                 state = 0;
             }else if(data == 175){  // 0xAF to Clear Memory
@@ -56,15 +63,12 @@ void OneWireCom::communicate()
                 }
                 state = 0;
             }else{
-                Serial.write(0);
+                Serial.write(255);
             }
-            Serial.print(10);
-            
         }
     }
 
 }
-
 OneWireCom::~OneWireCom()
 {
 }

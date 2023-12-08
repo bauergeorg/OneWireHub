@@ -19,7 +19,6 @@ private:
     
 public:
     OneWireCom(OneWireItem& ds24);
-    OneWireCom(OneWireItem& ds24,  Stream& serial, int x);
     OneWireCom(OneWireItem& ds24,  Stream& serial);
     
     
