@@ -130,7 +130,17 @@ void DS2431::duty(OneWireHub * const hub)
 
 void DS2431::clearMemory(void)
 {
-    memset(memory, static_cast<uint8_t>(0x00), sizeof(memory));
+    memset(memory, static_cast<uint8_t>(0x00), MEM_SIZE_CHIP);
+}
+
+void DS2431::clearMem(void)
+{
+    for(int i = 0; i < sizeof(memory); i++){
+        memory[i] = static_cast<uint8_t>(0x00);
+        Serial.write(i);
+        
+    }
+    Serial.write(255);
 }
 
 void DS2431::clearScratchpad(void)
@@ -171,7 +181,9 @@ void DS2431::setPageProtection(const uint8_t position)
 
     updatePageStatus();
 }
-
+void DS2431::getMemory(int index){    
+    Serial.write(memory[index]);
+}
 bool DS2431::getPageProtection(const uint8_t position) const
 {
     // should be an accurate model of the control bytes

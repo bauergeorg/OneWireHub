@@ -12,7 +12,7 @@ class DS2431 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t  MEM_SIZE_CHIP          { 144 };
+    static constexpr uint8_t  MEM_SIZE_CHIP          { 128 };
 
     static constexpr uint8_t  PAGE_SIZE         { 32 };
     static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE_CHIP / PAGE_SIZE };
@@ -43,18 +43,18 @@ public:
 
     DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, uint8_t ID6, uint8_t ID7);
 
-    void    duty(OneWireHub * hub) final;
+    void            duty(OneWireHub * hub) final;
 
     virtual void    clearMemory(void) override;
-
+    virtual void    clearMem(void) override;
     virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) ;
     virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const ;
+    void            getMemory(int index);
+    void            setPageProtection(uint8_t position);
+    bool            getPageProtection(uint8_t position) const;
 
-    void    setPageProtection(uint8_t position);
-    bool    getPageProtection(uint8_t position) const;
-
-    void    setPageEpromMode(uint8_t position);
-    bool    getPageEpromMode(uint8_t position) const;
+    void            setPageEpromMode(uint8_t position);
+    bool            getPageEpromMode(uint8_t position) const;
 };
 
 #endif

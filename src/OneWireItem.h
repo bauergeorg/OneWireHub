@@ -60,6 +60,7 @@ public:
     virtual void    clearMemory(void) { };
     virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) { };
     virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const { };
+    virtual void    clearMem()  { };
 
     virtual uint8_t writeStatus(uint16_t address, uint8_t value){ };
     virtual uint8_t readStatus(uint16_t address) const{ };
