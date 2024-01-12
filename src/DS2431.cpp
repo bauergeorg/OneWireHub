@@ -135,12 +135,15 @@ void DS2431::clearMemory(void)
 
 void DS2431::clearMem(void)
 {
+
+    uint8_t mem[MEM_SIZE_CHIP];
     for(int i = 0; i < sizeof(memory); i++){
-        memory[i] = static_cast<uint8_t>(0x00);
-        Serial.write(i);
+        mem[i] = static_cast<uint8_t>(0x00);
+    } 
+    for(int i = 0; i < 100; i++){
+        memory[i] = mem[i];
         
     }
-    Serial.write(255);
 }
 
 void DS2431::clearScratchpad(void)

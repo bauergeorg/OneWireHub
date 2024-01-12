@@ -31,12 +31,12 @@ void OneWireCom::communicate()
             if(data == 240){ // 0xF0
                 // Read Momory
                 uint8_t readmemory[4*16];
-                //bool tmp = m_chip->readMemory(readmemory, 128,0);
                 for(int i = start; i < (start+length); i++){
                     m_chip->getMemory(i);
                 }
                 state = 0;
-            }else if(data == 250){  // DS2431 Read Memory
+            }else if(data == 250){  
+                // DS2431 Read Memory
                 uint8_t readmemory[4*16];
                 bool tmp = m_chip->readMemory(readmemory, 128,0);
                 if(tmp == true){
@@ -76,6 +76,8 @@ void OneWireCom::communicate()
                 state = 0;
             }else{
                 Serial.write(255);
+                Serial.println("error: command not recongnized");
+                state = 0;
             }
         }
         
