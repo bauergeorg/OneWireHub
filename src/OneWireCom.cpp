@@ -11,6 +11,7 @@ OneWireCom::OneWireCom(OneWireItem& ds24,  Stream& serial)
 
 void OneWireCom::communicate()
 {
+    
     if(m_serial->available()>0){  
         int data = 0;
         int start = 0;
@@ -54,25 +55,15 @@ void OneWireCom::communicate()
                 m_chip->clearMem();
                 Serial.write(170);
                 state = 0;
-            }else if(data == 20){
-                // return the status info byte
+            }else if(data == 100){
+                // send info byte
                 Serial.write(m_chip->readInfo());
                 state = 0;
-            }else if(data == 30){
-                // PIOA auf 0 überprüfen 
-                if((m_chip->readInfo() & 0x10) > 0){
-                    Serial.write(55);
-                }else{
-                    Serial.write(110);
-                }
-                state = 0;
-            }else if(data == 40){
-                // PIOB auf 0 überprüfen
-                if((m_chip->readInfo() & 0x20) > 0){
-                    Serial.write(55);
-                }else{
-                    Serial.write(110);
-                }
+            }else if(data == 200){
+                // set activity in info byte
+                uint8_t newInfoValue = 0b01111111;
+                m_chip->writeInfo(newInfoValue);
+                Serial.write(m_chip->readInfo());
                 state = 0;
             }else{
                 Serial.write(255);
