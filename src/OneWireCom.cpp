@@ -68,6 +68,7 @@ void OneWireCom::communicate()
             }else if(data == 125){
                 // set activity in info byte
                 Serial.write(m_chip->readStatus(0x07));
+                state = 0;
             }else{
                 Serial.write(255);
                 Serial.println("error: command not recongnized");
