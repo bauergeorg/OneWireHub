@@ -23,7 +23,6 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
     // init pin activity on init/reset
     setPinActivity(0, true);
     setPinActivity(1, true);
-
 }
 
 void DS2406::duty(OneWireHub * const hub)
@@ -325,8 +324,16 @@ bool DS2406::setChipType(uint8_t value)
     if (value > 0x01) return false;
     
     chip_type = value;
-    if (chip_type == 0)  channel_size = 1;
-    else                 channel_size = 2;
+    if (chip_type == 0)
+    {
+        channel_size = 1;
+    }
+    else
+    {
+        channel_size = 2;
+        // set pin activity for channel pio b (like a reset)
+        setPinActivity(1, true);
+    }
 
     clearSupplyIndication();
     updateControl();
@@ -714,7 +721,6 @@ void DS2406::updateInfo(void)
         if (pull_up) setPinLevel(0, false);
         // set value of 'Channel Info Byte 1'
         info[INFO] &= ~(1 << 0);
-
     }
     else {
         if (pull_up) setPinLevel(0, true);
@@ -723,7 +729,7 @@ void DS2406::updateInfo(void)
     }            
 
     // in case of only PIO-A
-    if (channel_size == 0){
+    if (channel_size == 1){
         // clear channel flip flop for PIO-B
         info[INFO] &= ~(1 << 1);
         // clear sensed level for PIO-B
