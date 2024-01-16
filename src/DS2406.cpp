@@ -20,6 +20,10 @@ DS2406::DS2406(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
     clearScratchpad();
 
+    // init pin activity on init/reset
+    setPinActivity(0, true);
+    setPinActivity(1, true);
+
 }
 
 void DS2406::duty(OneWireHub * const hub)
