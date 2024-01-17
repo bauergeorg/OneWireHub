@@ -69,6 +69,50 @@ void OneWireCom::communicate()
                 // set activity in info byte
                 Serial.write(m_chip->readStatus(0x07));
                 state = 0;
+            }else if(data == 130){
+                // set PIOA State
+                if(start == 1){
+                    // set state of PIN A is 1
+                    m_chip->setPinState(0,true,1);
+                }else{                    
+                    // set state of PIN A is 0
+                    m_chip->setPinState(0,false,1);
+                }
+                Serial.write(m_chip->readInfo());
+                state = 0;
+            }else if(data == 140){
+                // set PIOA State
+                if(start == 1){
+                    // set state of PIN A is 1
+                    m_chip->setPinState(1,true,1);
+                }else{                    
+                    // set state of PIN A is 0
+                    m_chip->setPinState(1,false,1);
+                }
+                Serial.write(m_chip->readInfo());
+                state = 0;
+            }else if(data == 150){
+                // set PIOA Level
+                if(start == 1){
+                    // set level of PIN A is 1
+                    m_chip->setPinLevel(0,false);
+                }else{                    
+                    // set level of PIN A is 0
+                    m_chip->setPinLevel(0,true);
+                }
+                Serial.write(m_chip->readInfo());
+                state = 0;
+            }else if(data == 160){
+                // set PIOA Level
+                if(start == 1){
+                    // set level of PIN B is 1
+                    m_chip->setPinLevel(1,true);
+                }else{                    
+                    // set level of PIN B is 1
+                    m_chip->setPinLevel(1,false);
+                }
+                Serial.write(m_chip->readInfo());
+                state = 0;
             }else{
                 Serial.write(255);
                 Serial.println("error: command not recongnized");

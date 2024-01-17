@@ -527,7 +527,7 @@ void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
 {
     uint8_t pio_level = getPinLevel();
 
-    if (pinNumber >= channel_size) return;
+    if (pinNumber > channel_size) return;
 
     if(value){
         info[INFO] &= ~(1 << (pinNumber+2));
@@ -538,6 +538,7 @@ void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
 
     // set activity
     info[INFO] |= (pio_level ^ getPinLevel()) << 4; 
+
 
 }
 
