@@ -66,11 +66,23 @@ public:
     virtual uint8_t readStatus(uint16_t address) const{ };
     
     
-    virtual void writeInfo(uint8_t value) {};
-    virtual void clearInfo(void) {};
-    virtual void updateInfo(void) {};
+    virtual void    writeInfo(uint8_t value) {};
+    virtual void    clearInfo(void) {};
+    virtual void    updateInfo(void) {};
     virtual uint8_t readInfo(void) const {};
-    virtual void getMemory(int index){};
+    virtual void    getMemory(int index){};
+
+
+    //use for the DS2406 for testing via OneWireCom
+    virtual void            setPinLevel(uint8_t pinNumber, bool value){};
+    virtual bool            getPinLevel(uint8_t pinNumber) const{};
+    virtual uint8_t         getPinLevel(void) const{};
+
+    //use for the DS2406 for testing via OneWireCom
+    //                                                                 x verhindert einen overload Fehler zu anderen Chip
+    virtual void            setPinState(uint8_t pinNumber, bool value, uint8_t x){};
+    //virtual bool          setPinState(uint8_t pinNumber) const{};
+    //virtual uint8_t       setPinState(void) const{};
 
 };
 

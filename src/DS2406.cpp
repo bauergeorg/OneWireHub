@@ -360,8 +360,6 @@ bool DS2406::setPullUpResistor(bool value)
 /* Memory Section */
 
 
-
-
 void DS2406::clearScratchpad(void) // copied from 
 {
     memset(scratchpad, static_cast<uint8_t>(0x00), SCRATCHPAD_SIZE);    // ????
@@ -486,10 +484,10 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
 // (information saved in 'Channel Info Byte 1')
 // - set device status byte bit 5 or/and bit 6
 // - in case of pull-up: set pin level
-void DS2406::setPinState(const uint8_t pinNumber, const bool value)
+void DS2406::setPinState(uint8_t pinNumber, bool value, uint8_t x)
 {
-    if (pinNumber >= channel_size) return;
-
+    if (pinNumber > channel_size) return;
+    
     // if value true, set output high/true
     if(value) {
         status[STATUS_DEVICE] &= ~(1 << (pinNumber+5));
@@ -504,7 +502,7 @@ void DS2406::setPinState(const uint8_t pinNumber, const bool value)
     if (pull_up) {
         setPinLevel(pinNumber, value);
     }
-
+    updateInfo();
 }
 
 // Get Pin State of a specific pin number
@@ -533,7 +531,6 @@ void DS2406::setPinLevel(const uint8_t pinNumber, const bool value)
 
     if(value){
         info[INFO] &= ~(1 << (pinNumber+2));
-
     }   
     else {
         info[INFO] |= (1 << (pinNumber+2));
