@@ -116,11 +116,40 @@ void DS2431::duty(OneWireHub * const hub)
             break;
 
         case 0xF0:      // READ MEMORY COMMAND
-
+            /**
             if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
             if (reg_TA >= MEM_SIZE_CHIP) return;
             if (hub->send(&memory[reg_TA],MEM_SIZE_CHIP - uint8_t(reg_TA),crc)) return;
+            
             break; // send 1s when read is complete, is passive, so do nothing here
+            */
+           if (hub->recv(reinterpret_cast<uint8_t *>(&reg_TA),2))  return;
+           if (reg_TA >= MEM_SIZE_CHIP) return;
+            while (reg_TA <= MEM_SIZE_CHIP)
+            {
+                const uint16_t destin_TA = reg_TA; //translateRedirection(reg_TA);
+                const uint8_t  length    = PAGE_SIZE - uint8_t(reg_TA & PAGE_MASK);
+
+                if (destin_TA < MEM_SIZE_CHIP)
+                {
+                    // if (hub->send(&memory[destin_TA],length,crc)) return;
+                    if (hub->send(&memory[destin_TA],length)) return;
+                }
+                else // fake data
+                {
+                    data  = 0x00;
+                    uint8_t counter = length;
+                    while (counter-- > 0)
+                    {
+                        if (hub->send(&data, 1, crc)) return;
+                    }
+                }
+
+                reg_TA += length;
+            }
+            // crc = ~crc; // normally crc16 is sent ~inverted
+            // hub->send(reinterpret_cast<uint8_t *>(&crc),1);
+            break;
 
         default:
 

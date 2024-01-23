@@ -12,7 +12,7 @@ class DS2431 : public OneWireItem
 {
 private:
 
-    static constexpr uint8_t  MEM_SIZE_CHIP          { 144 };
+    static constexpr uint8_t  MEM_SIZE_CHIP          { 128 };
 
     static constexpr uint8_t  PAGE_SIZE         { 32 };
     static constexpr uint8_t  PAGE_COUNT        { MEM_SIZE_CHIP / PAGE_SIZE };
