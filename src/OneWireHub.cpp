@@ -608,9 +608,8 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
     noInterrupts(); // will be enabled at the end of function
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
-    uint8_t bytes_sent = 0;
-
-    for ( ; bytes_sent < data_length; ++bytes_sent)             // loop for sending bytes
+    uint8_t bytes_sent;
+    for ( bytes_sent = 0; bytes_sent < data_length; ++bytes_sent)             // loop for sending bytes
     {
         const uint8_t dataByte = address[bytes_sent];
 
@@ -618,6 +617,7 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length)
         {
             if (sendBit(static_cast<bool>(bitMask & dataByte)))
             {
+                
                 if ((bitMask == 0x01) && (_error == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
@@ -639,31 +639,35 @@ bool OneWireHub::send(const uint8_t address[], const uint8_t data_length, uint16
     DIRECT_WRITE_LOW(pin_baseReg, pin_bitMask);
     DIRECT_MODE_INPUT(pin_baseReg, pin_bitMask);
     uint8_t bytes_sent = 0;
-
+    
+    
     for ( ; bytes_sent < data_length; ++bytes_sent)             // loop for sending bytes
     {
         uint8_t dataByte = address[bytes_sent];
-
+        
         for (uint8_t counter = 0; counter < 8; ++counter)       // loop for sending bits
         {
+            
             if (sendBit(static_cast<bool>(0x01 & dataByte)))
             {
                 if ((counter == 0) && (_error ==Error::AWAIT_TIMESLOT_TIMEOUT_HIGH)) _error = Error::FIRST_BIT_OF_BYTE_TIMEOUT;
                 interrupts();
                 return true;
             }
-
             const uint8_t mix = ((uint8_t) crc16 ^ dataByte) & static_cast<uint8_t>(0x01);
+            
             crc16 >>= 1;
             if (mix != 0)  crc16 ^= static_cast<uint16_t>(0xA001);
             dataByte >>= 1;
         }
         if (USE_GPIO_DEBUG)
         {
+  
             DIRECT_WRITE_HIGH(debug_baseReg, debug_bitMask);
             DIRECT_WRITE_LOW(debug_baseReg, debug_bitMask);
         }
     }
+    
     interrupts();
     return (bytes_sent != data_length);
 }

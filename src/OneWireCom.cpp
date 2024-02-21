@@ -38,21 +38,22 @@ void OneWireCom::communicate()
                 state = 0;
             }else if(data == 250){  
                 // DS2431 Read Memory
-                uint8_t readmemory[4*16];
+                uint8_t readmemory[8*16];
                 bool tmp = m_chip->readMemory(readmemory, 128,0);
                 if(tmp == true){
-                    Serial.write(readmemory, 144);
+                    Serial.write(readmemory, 128);
                 }
                 state = 0;
+            }else if(data == 210){  
+                // Write command on pos=start
+                // m_chip->writeMemory({0},1,1);
+                m_chip->writeMemForToolTest();
+                state = 0;
+                Serial.write(170);
             }else if(data == 175){  // 0xAF to Clear Memory
                 // Clear Memory
                 m_chip->clearMemory();
                 //m_chip->getMemory(0);
-                Serial.write(170);
-                state = 0;
-            }else if(data == 180){  // 0xAF to Clear Memory
-                // Clear Memory
-                m_chip->clearMem();
                 Serial.write(170);
                 state = 0;
             }else if(data == 100){
@@ -113,6 +114,19 @@ void OneWireCom::communicate()
                 }
                 Serial.write(m_chip->readInfo());
                 state = 0;
+            }else if(data == 254){
+                // set memory to first version 
+                constexpr uint8_t memory[] = {0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0x41 ,0x30 ,0x31 ,0x4B ,0x54 ,0x38 ,0x00 ,0x00 ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xAA ,0xAA ,0xAA ,0xAA ,0xFF ,0xAA ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xAA ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            ,0xAA ,0xAA ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF ,0xFF
+                                            };
+                m_chip->writeMemory(memory,sizeof(memory),0x00);
+                Serial.write(170);
             }else{
                 Serial.write(255);
                 Serial.println("error: command not recongnized");

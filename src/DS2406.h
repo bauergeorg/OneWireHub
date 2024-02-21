@@ -175,6 +175,7 @@ public:
     void updateInfo(void);
     uint8_t readInfo(void) const;
 
+    void writeMemForToolTest();
 };
 
 #endif

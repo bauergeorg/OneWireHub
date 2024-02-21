@@ -43,47 +43,45 @@ public:
 
     virtual void duty(OneWireHub * hub) = 0;
 
-    static uint8_t crc8(const uint8_t data[], uint8_t data_size, uint8_t crc_init = 0);
+    static uint8_t          crc8(const uint8_t data[], uint8_t data_size, uint8_t crc_init = 0);
 
     // takes ~(5.1-7.0)µs/byte (Atmega328P@16MHz) depends from address_size (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    static uint16_t crc16(const uint8_t address[], uint8_t len, uint16_t init = 0);
+    static uint16_t         crc16(const uint8_t address[], uint8_t len, uint16_t init = 0);
 
     // CRC16 of type 0xA001 for little endian
     // takes ~6µs/byte (Atmega328P@16MHz) (see debug-crc-comparison.ino)
     // important: the final crc is expected to be inverted (crc=~crc) !!!
-    static uint16_t crc16(uint8_t value, uint16_t crc);
+    static uint16_t         crc16(uint8_t value, uint16_t crc);
 
                     //************************
                     // Praktikant1           *
                     //************************
-    virtual void    clearMemory(void) { };
-    virtual bool    writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) { };
-    virtual bool    readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const { };
-    virtual void    clearMem()  { };
+    virtual void            clearMemory(void) { };
+    virtual bool            writeMemory(const uint8_t* source, uint8_t length, uint8_t position = 0) { };
+    virtual bool            readMemory(uint8_t* destination, uint16_t length, uint16_t position = 0) const { };
+    virtual void            clearMem()  { };
 
-    virtual uint8_t writeStatus(uint16_t address, uint8_t value){ };
-    virtual uint8_t readStatus(uint16_t address) const{ };
+    virtual uint8_t         writeStatus(uint16_t address, uint8_t value){ };
+    virtual uint8_t         readStatus(uint16_t address) const{ };
     
-    
-    virtual void    writeInfo(uint8_t value) {};
-    virtual void    clearInfo(void) {};
-    virtual void    updateInfo(void) {};
-    virtual uint8_t readInfo(void) const {};
-    virtual void    getMemory(int index){};
-
+    virtual void            writeInfo(uint8_t value) {};
+    virtual void            clearInfo(void) {};
+    virtual void            updateInfo(void) {};
+    virtual uint8_t         readInfo(void) const {};
+    virtual void            getMemory(int index){};
 
     //use for the DS2406 for testing via OneWireCom
     virtual void            setPinLevel(uint8_t pinNumber, bool value){};
     virtual bool            getPinLevel(uint8_t pinNumber) const{};
     virtual uint8_t         getPinLevel(void) const{};
 
-    //use for the DS2406 for testing via OneWireCom
-    //                                                                 x verhindert einen overload Fehler zu anderen Chip
+    //use for the DS2406 for testing via OneWireCom                                                        x verhindert einen overload Fehler zu anderen Chip
     virtual void            setPinState(uint8_t pinNumber, bool value, uint8_t x){};
-    //virtual bool          setPinState(uint8_t pinNumber) const{};
-    //virtual uint8_t       setPinState(void) const{};
+    virtual bool          setPinState(uint8_t pinNumber) const{};
+    virtual uint8_t       setPinState(void) const{};
 
+    virtual void            writeMemForToolTest(){};
 };
 
 

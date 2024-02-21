@@ -315,6 +315,15 @@ void DS2406::duty(OneWireHub * const hub)
     }
 }
 
+
+
+void DS2406::writeMemForToolTest(){
+    uint8_t tmp =  memory[0];
+    memory[0] = memory[1];
+    memory[1] = tmp;
+};
+
+
 // Set Chip Type
 // value = 0x00 for the DS2406+, 3 pin package TO-92 (No Vcc, only one switch: PIO-A) (default)
 // value = 0x01 for the DS2406P+, 6 pin package TSOC (Vcc Pin, two switches: PIO-A & PIO-B)
