@@ -16,7 +16,7 @@ DS2431::DS2431(uint8_t ID1, uint8_t ID2, uint8_t ID3, uint8_t ID4, uint8_t ID5, 
 
 void DS2431::duty(OneWireHub * const hub)
 {
-    constexpr uint8_t ALTERNATING_10 { 0xAA };
+    constexpr uint8_t ALTERNATING_10 { 0x55 };
     static uint16_t   reg_TA         { 0 }; // contains TA1, TA2
     static uint8_t    reg_ES         { 0 }; // E/S register
     uint16_t          crc            { 0 };
@@ -105,7 +105,7 @@ void DS2431::duty(OneWireHub * const hub)
             {
                 hub->clearError();
 
-                hub->sendBit(true); // send passive 1s
+                hub->sendBit(false); // send passive 1s
 
             }
             while   (hub->getError() == Error::AWAIT_TIMESLOT_TIMEOUT_HIGH); // wait for timeslots
