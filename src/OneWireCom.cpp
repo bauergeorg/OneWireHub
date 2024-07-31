@@ -30,7 +30,7 @@ void OneWireCom::communicate()
                 Serial.write(110);
             }
             if(data == 240){ // 0xF0
-                // Read Momory
+                // Read Memory
                 uint8_t readmemory[4*16];
                 for(int i = start; i < (start+length); i++){
                     m_chip->getMemory(i);
