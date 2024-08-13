@@ -353,8 +353,8 @@ bool DS2406::setChipType(uint8_t value)
 
 
 // Set Pull Up Resistor
-// value = true:  enable pull up reistor to PIO's
-// value = false: disable pull up reistor to PIO's
+// value = true:  enable pull up resistor to PIO's
+// value = false: disable pull up resistor to PIO's
 // Function will clear supply indication and update 'Channel Control Byte 1', Status Registers, 'Channel Info Byte 1'
 bool DS2406::setPullUpResistor(bool value)
 {   
