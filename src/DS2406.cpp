@@ -493,7 +493,7 @@ uint8_t DS2406::translateRedirection(const uint8_t source_address) const // TODO
 // (information saved in 'Channel Info Byte 1')
 // - set device status byte bit 5 or/and bit 6
 // - in case of pull-up: set pin level
-void DS2406::setPinState(uint8_t pinNumber, bool value, uint8_t x)
+void DS2406::setPinState(uint8_t pinNumber, bool value)
 {
     if (pinNumber > channel_size) return;
     

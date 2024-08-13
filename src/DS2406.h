@@ -144,7 +144,7 @@ public:
     uint8_t getPageRedirection(uint8_t page) const;
 
     // Pin Section
-    void    setPinState(uint8_t pinNumber, bool value, uint8_t x);
+    void    setPinState(uint8_t pinNumber, bool value);
     bool    getPinState(uint8_t pinNumber) const;
     uint8_t getPinState(void) const;
 
